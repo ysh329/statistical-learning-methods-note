@@ -8,7 +8,7 @@
 * 第 5 章 决策树
 * 第 6 章 逻辑斯谛回归与最大熵模型
 * 第 7 章 支持向量机
-* [第 8 章 提升方法](./chatper_8_adaboost/adaboost.md)
+* [第 8 章 提升方法](./chapter_8_boosting/adaboost.md)
 * 第 9 章 EM算法及其推广
 * 第 10 章 隐马尔科夫模型
 * 第 11 章 条件随机场
