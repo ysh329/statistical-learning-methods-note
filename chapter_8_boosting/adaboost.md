@@ -30,7 +30,7 @@ $$
 每个样本，比方第 $i$ 个样本由特征 $x_i \in \chi \subseteq R^n$ 和其真实类别标记 $y_i \in \gamma = \{-1,+1\}$ 组成，$\chi$ 是实例空间， $\gamma$ 是类别的标记集合。
 
 *****
-AdaBoost 算法描述
+**AdaBoost 算法描述**
 
 * 输入：训练数据集 $T = \{(x_1,y_1),(x_2,y_2),...,(x_N,y_N)\}$ ，其中 $x_i \in \chi \subseteq R^n$ ， $y_i \in \gamma = \{-1,+1\}$ ；弱学习算法。
 * 输出：最终分类器 $G(x).$
@@ -50,9 +50,23 @@ $$
   4. 更新数据集的权值分布
   $$
   D_{m+1} = (w_{m+1,1}, ..., w_{m+1,i}, w_{m+1,N})\\
-  w_{m+1,i} = \frac{w_{mi}}{Z_m} \exp(-\alpha_m y_i )
+  w_{m+1,i} = \frac{w_{mi}}{Z_m} \exp(-\alpha_m y_i G_m(x_i)),i=1,2,...,N
   $$
+  这里， $Z_m$ 是规范化因子
+  $$
+  Z_m = \sum_{i=1}^{N} w_{mi} \exp(-\alpha_m y_i G_m(x_i))
+  $$
+  它使 $D_{m+1}$ 成为一个概率分布.
+3. 构建基本分类器的线性组合
+$$
+f(x) = \sum_{m=1}^{M} \alpha_m G_m(x)
+$$
+得到最终分类器
+$$
+G(x) = sign(f(x)) = sign\left [ \sum_{m=1}^{M} \alpha_m G_m(x) \right ]
+$$
 *****
+
 
 
 
