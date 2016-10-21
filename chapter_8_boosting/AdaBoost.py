@@ -11,7 +11,6 @@ __author__ = 'yuens'
 
 
 ################################### PART1 IMPORT ######################################
-import random
 import cmath
 
 ################################### PART2 CLASS && FUNCTION ###########################
@@ -41,28 +40,8 @@ def readDataFrom(path, hasHeader=True):
 
 class BaseClassifier(object):
     def __init__(self, xList=None, threshold=None):
-
         self.POSITIVE_LABEL = 1
         self.NEGATIVE_LABEL = -1
-
-        if threshold == None:
-            begin, end = self.maxAndMin(xList)
-            self.threshold = random.randint(begin, end)
-        else:
-            self.threshold = threshold
-
-    def __del__(self):
-        pass
-
-    def setThreshold(self, threshold):
-        self.threshold = threshold
-
-    def updateThreshold(self, delta):
-        newThreshold = self.threshold + delta
-        self.setThreshold(newThreshold)
-
-    def getThreshold(self):
-        return self.threshold
 
     def predict(self, x, reverse=False):
         if reverse:
@@ -89,11 +68,6 @@ class BaseClassifier(object):
                          errIdxAndIsCorrectPredictTupleList)
         return yHatList, errNum, errRate, errIdxList
 
-
-    def maxAndMin(self, x):
-        return min(x), max(x)
-
-
 class Boosting(object):
     def __init__(self, sampleNum, baseClassifierNum):
         self.sampleNum = sampleNum
@@ -110,9 +84,6 @@ class Boosting(object):
         self.zList = [None] * self.baseClassifierNum
         # BaseClassifierCoefficient
         self.alphaList = [None] * self.baseClassifierNum
-
-    def __del__(self):
-        pass
 
     def computeClassifierErrorRate(self, classifierIdx, yHatList, yList):
         self.eList[classifierIdx] = sum(\
@@ -146,9 +117,7 @@ class Boosting(object):
         else:
             return self.POSITIVE_LABEL if sum(baseClassifierResultList) < 0 else self.NEGATIVE_LABEL
 
-
     def train(self, xList, yList, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None, boostingClassifierReverse=False):
-
         yHatList = map(lambda x:\
                            self.predict(x,\
                                         baseClassifierList,\
@@ -213,8 +182,7 @@ for classifierIdx in xrange(boosting.baseClassifierNum):
     boosting.computeClassifierErrorRate(classifierIdx=classifierIdx,\
                                         yHatList=yHatList,\
                                         yList=yList)
-    # 打印权重分布
-    ########
+
     # 计算分类器系数
     boosting.computeBaseClassifierCoefficient(classifierIdx=classifierIdx)
 
@@ -253,6 +221,7 @@ yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
                                                        baseClassifierNum=boosting.baseClassifierNum,\
                                                        baseClassifierReverseList=baseClassifierReverseList,\
                                                        boostingClassifierReverse=boostingClassifierReverse)
+
 # boosting结果
 print("----- final boosting -----")
 print("yHatList:{0}".format(yHatList))
