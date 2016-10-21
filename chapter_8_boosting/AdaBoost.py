@@ -225,7 +225,7 @@ class Boosting(object):
         # 对最终的参数打包成一个字典
         parameterDict = dict()
         parameterDict['w'] = self.wList[classifierIdx + 1]
-        parameterDict['alpha'] = self.alphaList[classifierIdx]
+        parameterDict['alphaList'] = self.alphaList
         parameterDict['z'] = self.zList[classifierIdx]
         parameterDict['e'] = self.eList[classifierIdx]
         return parameterDict
@@ -256,72 +256,10 @@ parameterDict = boosting.boostTraining(xList=xList,\
                                        baseClassifierReverseList=baseClassifierReverseList,\
                                        boostingClassifierReverse=boostingClassifierReverse)
 
-# # 训练boosting
-# for classifierIdx in xrange(boosting.baseClassifierNum):
-#     # 初始化参数
-#     baseClassifierReverse = baseClassifierReverseList[classifierIdx]
-#     usedBaseClassifierNum = classifierIdx + 1
-#
-#     print("----- baseClassifier {0} -----".format(classifierIdx))
-#     # 依次遍历分类器
-#     baseClassifier = baseClassifierList[classifierIdx]
-#     yHatList, errNum, errRate, errIdxList = baseClassifier.train(xList=xList,\
-#                                                                  yList=yList,\
-#                                                                  reverse=baseClassifierReverse)
-#
-#     # 计算分类器误差
-#     print("errNum:{0}".format(errNum))
-#     print("errRate:{0}".format(errRate))
-#     print("errIdxList:{0}".format(errIdxList))
-#
-#     # 计算分类器误差率
-#     boosting.computeClassifierErrorRate(classifierIdx=classifierIdx,\
-#                                         yHatList=yHatList,\
-#                                         yList=yList)
-#
-#     # 计算分类器系数
-#     boosting.computeBaseClassifierCoefficient(classifierIdx=classifierIdx)
-#
-#     # 计算规范化因子
-#     boosting.computeNormalizationFactor(classifierIdx=classifierIdx,\
-#                                         yList=yList,\
-#                                         yHatList=yHatList)
-#
-#     # 计算数据集权重分布
-#     boosting.computeDataSetWeightDistribution(classifierIdx=classifierIdx,\
-#                                               yList=yList,\
-#                                               yHatList=yHatList)
-#
-#     # 打印分类器系数
-#     print("----- boosting -----")
-#     print("boosting.wList[classifierIdx]:{0}".format(boosting.wList[classifierIdx]))
-#     print("boosting.alphaList[classifierIdx]:{0}".format(boosting.alphaList[classifierIdx]))
-#     print("boosting.zList[classifierIdx]:{0}".format(boosting.zList[classifierIdx]))
-#     print("boosting.eList[classifierIdx]:{0}".format(boosting.eList[classifierIdx]))
-#
-#     yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
-#                                                            yList=yList,\
-#                                                            baseClassifierList=baseClassifierList,\
-#                                                            baseClassifierNum=usedBaseClassifierNum,\
-#                                                            baseClassifierReverseList=baseClassifierReverseList[:usedBaseClassifierNum],\
-#                                                            boostingClassifierReverse=boostingClassifierReverse)
-#     print("errIdxList:{0}".format(errIdxList))
-#     print("yHatList:{0}".format(yHatList))
-#     print("errRate:{0}".format(errRate))
-#     print
-#
-# # boosting分类器
-# yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
-#                                                        yList=yList, \
-#                                                        baseClassifierList=baseClassifierList,\
-#                                                        baseClassifierNum=boosting.baseClassifierNum,\
-#                                                        baseClassifierReverseList=baseClassifierReverseList,\
-#                                                        boostingClassifierReverse=boostingClassifierReverse)
-#
-# # boosting结果
-# print("----- final boosting -----")
-# print("yHatList:{0}".format(yHatList))
-# print("errNum:{0}".format(errNum))
-# print("errRate:{0}".format(errRate))
-# print("errIdxList:{0}".format(errIdxList))
-# print("boosting.alphaList:{0}".format(boosting.alphaList))
+
+# boosting参数结果
+print("----- final boosting parameters -----")
+print("parameterDict['w']:{0}".format(parameterDict['w']))
+print("parameterDict['e']:{0}".format(parameterDict['e']))
+print("parameterDict['alphaList']:{0}".format(parameterDict['alphaList']))
+print("parameterDict['z']:{0}".format(parameterDict['z']))
