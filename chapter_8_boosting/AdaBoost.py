@@ -51,10 +51,8 @@ class BaseClassifier(object):
     '''
     def __init__(self, threshold=None):
         '''
-
-        :param xList:
-        :param yList:
-        :param threshold:
+        初始化分类器，设置阈值。
+        :param threshold: float 分类阈值
         '''
         self.POSITIVE_LABEL = 1
         self.NEGATIVE_LABEL = -1
@@ -62,12 +60,25 @@ class BaseClassifier(object):
         self.threshold = threshold
 
     def predict(self, x, reverse=False):
+        '''
+        根据输入的一个样本特征值进行类别预测。
+        :param x: 输入的一个样本的特征
+        :param reverse: 类别对于阈值的方向（大于小于）
+        :return:
+        '''
         if reverse:
             return self.POSITIVE_LABEL if x > self.threshold else self.NEGATIVE_LABEL
         else:
             return self.POSITIVE_LABEL if x < self.threshold else self.NEGATIVE_LABEL
 
     def train(self, xList, yList, reverse=False):
+        '''
+        对多个样本的类别进行预测，并返回预测值(yHatList)，错分样本个数(errNum)， 错分率(errRate)， 错分样本下标(errIdxList)。
+        :param xList: 多个样本的特征的列表
+        :param yList: 多个样本的实际标签
+        :param reverse: 类别对于阈值的方向（大于小于）
+        :return:
+        '''
         yHatList = map(lambda x: self.predict(x, reverse=reverse), xList)
         isCorrectPredictList = map(lambda yHat, y: yHat == y, yHatList, yList)
         # 错分数
@@ -87,7 +98,15 @@ class BaseClassifier(object):
         return yHatList, errNum, errRate, errIdxList
 
 class Boosting(object):
+    '''
+    多模型集成。
+    '''
     def __init__(self, sampleNum, baseClassifierNum):
+        '''
+        类boosting实例化，关键参数初始化。
+        :param sampleNum: 训练样本数目，后面需要初始化每个样本的权重
+        :param baseClassifierNum: 基分类器数目
+        '''
         self.sampleNum = sampleNum
         self.baseClassifierNum = baseClassifierNum
 
@@ -104,6 +123,13 @@ class Boosting(object):
         self.alphaList = [None] * self.baseClassifierNum
 
     def computeClassifierErrorRate(self, classifierIdx, yHatList, yList):
+        '''
+        计算分类器错误率（不是常见的错误率），该错误率参考了每个样本的权重。
+        :param classifierIdx: 当前正在训练的基分类器下标(从0开始)
+        :param yHatList: 当前基分类器对于xList的预测值yHatList
+        :param yList: 所有训练样本的真实类别yList
+        :return:
+        '''
         self.eList[classifierIdx] = sum(\
             map(lambda xIdx, yHat, y:\
                     self.wList[classifierIdx][xIdx] if yHat != y else 0,\
@@ -111,17 +137,36 @@ class Boosting(object):
             )
 
     def computeBaseClassifierCoefficient(self, classifierIdx):
+        '''
+        输入当前正在训练的基分类器下标(从0开始)，计算当前的基分类器系数 alpha 。
+        :param classifierIdx: 当前分类器下标(从0开始)
+        :return:
+        '''
         self.alphaList[classifierIdx] = (1.0 / 2 * \
                                          cmath.log((1.0-self.eList[classifierIdx])/self.eList[classifierIdx], cmath.e)\
                                          ).real
 
     def computeDataSetWeightDistribution(self, classifierIdx, yList, yHatList):
+        '''
+        输入当前正在训练的分类器下标，样本真实值和预测值，计算训练数据集样本的权重分布。
+        :param classifierIdx: 当前正在训练的分类器下标(从0开始)
+        :param yList: 训练样本真实类别
+        :param yHatList: 训练样本基于当前分类器的预测值
+        :return:
+        '''
         self.wList[classifierIdx+1] = map(lambda w, y, yHat:\
                                               (w / self.zList[classifierIdx] *\
                                                cmath.exp(-self.alphaList[classifierIdx] * y * yHat)).real,\
                                           self.wList[classifierIdx], yList, yHatList)
 
     def computeNormalizationFactor(self, classifierIdx, yList, yHatList):
+        '''
+        根据当前正在使用的分类器(下标，从0开始)、真实类别、预测类别，计算当前分类器在训练数据上的规范化因子。
+        :param classifierIdx: 当前正在训练的分类器下标(从0开始)
+        :param yList: 训练样本真实类别
+        :param yHatList: 训练样本基于当前分类器的预测值
+        :return:
+        '''
         tmpZList = map(lambda w, y, yHat:\
                            w * cmath.exp(-self.alphaList[classifierIdx] * y * yHat),\
                        self.wList[classifierIdx], yList, yHatList)
@@ -129,6 +174,15 @@ class Boosting(object):
 
     def predict(self, x, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None,\
                 boostingClassifierReverse=False):
+        '''
+        基于baseClassifierList中的前baseClassifierNum个分类器，来预测样本x的类别。
+        :param x: 待预测的样本特征
+        :param baseClassifierList: 多个分类器对象的列表
+        :param baseClassifierNum: 当前用到的分类器数目，从第一个开始算
+        :param baseClassifierReverseList: 类别对于阈值的方向（大于小于），多个基分类器所以是一个列表
+        :param boostingClassifierReverse: 类别对于阈值的方向（大于小于），集成的分类器所以是一个
+        :return: 当前样本x所属的类别
+        '''
         if baseClassifierReverseList is None:
             baseClassifierReverseList = [False] * len(baseClassifierList)
         baseClassifierResultList = map(lambda baseClassifier, alpha, baseClassifierReverse:\
@@ -142,6 +196,16 @@ class Boosting(object):
 
     def train(self, xList, yList, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None,\
               boostingClassifierReverse=False):
+        '''
+        使用predict函数基于多个基分类器，批量预测样本的类别。
+        :param xList: 多个样本的特征的列表
+        :param yList: 多个样本的实际标签
+        :param baseClassifierList: 多个分类器对象的列表
+        :param baseClassifierNum: 当前用到的分类器数目，从第一个开始算
+        :param baseClassifierReverseList: 类别对于阈值的方向（大于小于），多个基分类器所以是一个列表
+        :param boostingClassifierReverse: 类别对于阈值的方向（大于小于），集成的分类器所以是一个
+        :return: 批量样本的预测结果yHatList、错分数errNum、错误率errRate、错分样本的下标errIdxList
+        '''
         yHatList = map(lambda x:\
                            self.predict(x,\
                                         baseClassifierList,\
@@ -168,6 +232,14 @@ class Boosting(object):
         return yHatList, errNum, errRate, errIdxList
 
     def boostTraining(self, xList, yList, baseClassifierReverseList, boostingClassifierReverse):
+        '''
+        训练集成模型。
+        :param xList: 多个样本的特征的列表
+        :param yList: 多个样本的实际标签
+        :param baseClassifierReverseList: 类别对于阈值的方向（大于小于），多个基分类器所以是一个列表
+        :param boostingClassifierReverse: 类别对于阈值的方向（大于小于），集成的分类器所以是一个
+        :return: dict，返回最终训练得到的参数。
+        '''
         for classifierIdx in xrange(self.baseClassifierNum):
             # 初始化参数
             baseClassifierReverse = baseClassifierReverseList[classifierIdx]
@@ -232,34 +304,36 @@ class Boosting(object):
 
 
 ################################### PART3 TEST #######################################
-# 参数初始化
-dataPath = './input'
-baseClassifierNum = 3
-baseClassifierThresholdList = [2.5, 8.5, 5.5]
-baseClassifierReverseList = [False, False, True]
-boostingClassifierReverse = True
+# 例子
+if __name__ == "__main__":
+    # 参数初始化
+    dataPath = './input'
+    baseClassifierNum = 3
+    baseClassifierThresholdList = [2.5, 8.5, 5.5]
+    baseClassifierReverseList = [False, False, True]
+    boostingClassifierReverse = True
 
-# 读取数据
-idList, xList, yList = readDataFrom(dataPath, hasHeader=True)
-print("id:{0}".format(idList))
-print("x:{0}".format(xList))
-print("y:{0}".format(yList))
+    # 读取数据
+    idList, xList, yList = readDataFrom(dataPath, hasHeader=True)
+    print("id:{0}".format(idList))
+    print("x:{0}".format(xList))
+    print("y:{0}".format(yList))
 
-# 初始化boosting类和多个分类器
-boosting = Boosting(sampleNum=len(idList), baseClassifierNum=baseClassifierNum)
-baseClassifierList = map(lambda threshold:\
-                             BaseClassifier(threshold=threshold),\
-                         baseClassifierThresholdList)
+    # 初始化boosting类和多个分类器
+    boosting = Boosting(sampleNum=len(idList), baseClassifierNum=baseClassifierNum)
+    baseClassifierList = map(lambda threshold:\
+                                 BaseClassifier(threshold=threshold),\
+                             baseClassifierThresholdList)
 
-parameterDict = boosting.boostTraining(xList=xList,\
-                                       yList=yList,\
-                                       baseClassifierReverseList=baseClassifierReverseList,\
-                                       boostingClassifierReverse=boostingClassifierReverse)
+    parameterDict = boosting.boostTraining(xList=xList,\
+                                           yList=yList,\
+                                           baseClassifierReverseList=baseClassifierReverseList,\
+                                           boostingClassifierReverse=boostingClassifierReverse)
 
 
-# boosting参数结果
-print("----- final boosting parameters -----")
-print("parameterDict['w']:{0}".format(parameterDict['w']))
-print("parameterDict['e']:{0}".format(parameterDict['e']))
-print("parameterDict['alphaList']:{0}".format(parameterDict['alphaList']))
-print("parameterDict['z']:{0}".format(parameterDict['z']))
+    # boosting参数结果
+    print("----- final boosting parameters -----")
+    print("parameterDict['w']:{0}".format(parameterDict['w']))
+    print("parameterDict['e']:{0}".format(parameterDict['e']))
+    print("parameterDict['alphaList']:{0}".format(parameterDict['alphaList']))
+    print("parameterDict['z']:{0}".format(parameterDict['z']))
