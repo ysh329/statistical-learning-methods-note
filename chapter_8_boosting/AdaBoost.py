@@ -16,6 +16,13 @@ import cmath
 ################################### PART2 CLASS && FUNCTION ###########################
 
 def readDataFrom(path, hasHeader=True):
+    '''
+    读取路径为path的文件，默认第一行为表头文件(hasHeader=True)，
+    否则需要设置第一行不包含表头文件(hasHeader=False)。
+    :param path: 读取数据的路径
+    :param hasHeader: 数据文件是否有表头
+    :return: 返回数据id、特征、标签
+    '''
     with open(path, 'r') as f:
         rawData = map(lambda line: line.replace("\n", "").split("   "), f.readlines())
         if hasHeader:
@@ -39,9 +46,20 @@ def readDataFrom(path, hasHeader=True):
     return idList, xList, yList
 
 class BaseClassifier(object):
-    def __init__(self, xList=None, threshold=None):
+    '''
+    二类线性分类器，根据阈值对输入数据进行类别判断。
+    '''
+    def __init__(self, threshold=None):
+        '''
+
+        :param xList:
+        :param yList:
+        :param threshold:
+        '''
         self.POSITIVE_LABEL = 1
         self.NEGATIVE_LABEL = -1
+
+        self.threshold = threshold
 
     def predict(self, x, reverse=False):
         if reverse:
@@ -93,11 +111,14 @@ class Boosting(object):
             )
 
     def computeBaseClassifierCoefficient(self, classifierIdx):
-        self.alphaList[classifierIdx] = (1.0 / 2 * cmath.log((1.0-self.eList[classifierIdx])/self.eList[classifierIdx], cmath.e)).real
+        self.alphaList[classifierIdx] = (1.0 / 2 * \
+                                         cmath.log((1.0-self.eList[classifierIdx])/self.eList[classifierIdx], cmath.e)\
+                                         ).real
 
     def computeDataSetWeightDistribution(self, classifierIdx, yList, yHatList):
         self.wList[classifierIdx+1] = map(lambda w, y, yHat:\
-                                              (w / self.zList[classifierIdx] * cmath.exp(-self.alphaList[classifierIdx] * y * yHat)).real,\
+                                              (w / self.zList[classifierIdx] *\
+                                               cmath.exp(-self.alphaList[classifierIdx] * y * yHat)).real,\
                                           self.wList[classifierIdx], yList, yHatList)
 
     def computeNormalizationFactor(self, classifierIdx, yList, yHatList):
@@ -106,18 +127,21 @@ class Boosting(object):
                        self.wList[classifierIdx], yList, yHatList)
         self.zList[classifierIdx] = sum(tmpZList).real
 
-    def predict(self, x, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None, boostingClassifierReverse=False):
+    def predict(self, x, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None,\
+                boostingClassifierReverse=False):
         if baseClassifierReverseList is None:
             baseClassifierReverseList = [False] * len(baseClassifierList)
         baseClassifierResultList = map(lambda baseClassifier, alpha, baseClassifierReverse:\
                                            alpha * baseClassifier.predict(x, baseClassifierReverse),\
-                                       baseClassifierList[:baseClassifierNum], self.alphaList[:baseClassifierNum], baseClassifierReverseList[:baseClassifierNum])
+                                       baseClassifierList[:baseClassifierNum], self.alphaList[:baseClassifierNum],\
+                                       baseClassifierReverseList[:baseClassifierNum])
         if boostingClassifierReverse:
             return self.POSITIVE_LABEL if sum(baseClassifierResultList) > 0 else self.NEGATIVE_LABEL
         else:
             return self.POSITIVE_LABEL if sum(baseClassifierResultList) < 0 else self.NEGATIVE_LABEL
 
-    def train(self, xList, yList, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None, boostingClassifierReverse=False):
+    def train(self, xList, yList, baseClassifierList, baseClassifierNum, baseClassifierReverseList=None,\
+              boostingClassifierReverse=False):
         yHatList = map(lambda x:\
                            self.predict(x,\
                                         baseClassifierList,\
@@ -143,6 +167,69 @@ class Boosting(object):
                          errIdxAndIsCorrectPredictTupleList)
         return yHatList, errNum, errRate, errIdxList
 
+    def boostTraining(self, xList, yList, baseClassifierReverseList, boostingClassifierReverse):
+        for classifierIdx in xrange(self.baseClassifierNum):
+            # 初始化参数
+            baseClassifierReverse = baseClassifierReverseList[classifierIdx]
+            usedBaseClassifierNum = classifierIdx + 1
+
+            print("----- baseClassifier {0} -----".format(classifierIdx))
+            # 依次遍历分类器
+            baseClassifier = baseClassifierList[classifierIdx]
+            yHatList, errNum, errRate, errIdxList = baseClassifier.train(xList=xList, \
+                                                                         yList=yList, \
+                                                                         reverse=baseClassifierReverse)
+
+            # 计算分类器误差
+            print("errNum:{0}".format(errNum))
+            print("errRate:{0}".format(errRate))
+            print("errIdxList:{0}".format(errIdxList))
+
+            # 计算分类器误差率
+            self.computeClassifierErrorRate(classifierIdx=classifierIdx, \
+                                            yHatList=yHatList, \
+                                            yList=yList)
+
+            # 计算分类器系数
+            self.computeBaseClassifierCoefficient(classifierIdx=classifierIdx)
+
+            # 计算规范化因子
+            self.computeNormalizationFactor(classifierIdx=classifierIdx, \
+                                            yList=yList, \
+                                            yHatList=yHatList)
+
+            # 计算数据集权重分布
+            self.computeDataSetWeightDistribution(classifierIdx=classifierIdx, \
+                                                  yList=yList, \
+                                                  yHatList=yHatList)
+
+            # 打印分类器系数
+            print("----- boosting -----")
+            print("boosting.wList[classifierIdx]:{0}".format(boosting.wList[classifierIdx]))
+            print("boosting.alphaList[classifierIdx]:{0}".format(boosting.alphaList[classifierIdx]))
+            print("boosting.zList[classifierIdx]:{0}".format(boosting.zList[classifierIdx]))
+            print("boosting.eList[classifierIdx]:{0}".format(boosting.eList[classifierIdx]))
+
+            yHatList, errNum, errRate, errIdxList = self.train(xList=xList, \
+                                                               yList=yList, \
+                                                               baseClassifierList=baseClassifierList, \
+                                                               baseClassifierNum=usedBaseClassifierNum, \
+                                                               baseClassifierReverseList=baseClassifierReverseList[\
+                                                                                         :usedBaseClassifierNum], \
+                                                               boostingClassifierReverse=boostingClassifierReverse)
+            print("errIdxList:{0}".format(errIdxList))
+            print("yHatList:{0}".format(yHatList))
+            print("errRate:{0}".format(errRate))
+            print
+
+        # 对最终的参数打包成一个字典
+        parameterDict = dict()
+        parameterDict['w'] = self.wList[classifierIdx + 1]
+        parameterDict['alpha'] = self.alphaList[classifierIdx]
+        parameterDict['z'] = self.zList[classifierIdx]
+        parameterDict['e'] = self.eList[classifierIdx]
+        return parameterDict
+
 
 ################################### PART3 TEST #######################################
 # 参数初始化
@@ -161,71 +248,80 @@ print("y:{0}".format(yList))
 # 初始化boosting类和多个分类器
 boosting = Boosting(sampleNum=len(idList), baseClassifierNum=baseClassifierNum)
 baseClassifierList = map(lambda threshold:\
-                             BaseClassifier(xList=xList, threshold=threshold),\
+                             BaseClassifier(threshold=threshold),\
                          baseClassifierThresholdList)
 
-# 训练boosting
-for classifierIdx in xrange(boosting.baseClassifierNum):
-    print("----- baseClassifier {0} -----".format(classifierIdx))
-    # 依次遍历分类器
-    baseClassifier = baseClassifierList[classifierIdx]
-    yHatList, errNum, errRate, errIdxList = baseClassifier.train(xList=xList,\
-                                                                 yList=yList,\
-                                                                 reverse=False if classifierIdx<2 else True)
+parameterDict = boosting.boostTraining(xList=xList,\
+                                       yList=yList,\
+                                       baseClassifierReverseList=baseClassifierReverseList,\
+                                       boostingClassifierReverse=boostingClassifierReverse)
 
-    # 计算分类器误差
-    print("errNum:{0}".format(errNum))
-    print("errRate:{0}".format(errRate))
-    print("errIdxList:{0}".format(errIdxList))
-
-    # 计算分类器误差率
-    boosting.computeClassifierErrorRate(classifierIdx=classifierIdx,\
-                                        yHatList=yHatList,\
-                                        yList=yList)
-
-    # 计算分类器系数
-    boosting.computeBaseClassifierCoefficient(classifierIdx=classifierIdx)
-
-    # 计算规范化因子
-    boosting.computeNormalizationFactor(classifierIdx=classifierIdx,\
-                                        yList=yList,\
-                                        yHatList=yHatList)
-
-    # 计算数据集权重分布
-    boosting.computeDataSetWeightDistribution(classifierIdx=classifierIdx,\
-                                              yList=yList,\
-                                              yHatList=yHatList)
-
-    # 打印分类器系数
-    print("----- boosting -----")
-    print("boosting.wList[classifierIdx]:{0}".format(boosting.wList[classifierIdx]))
-    print("boosting.alphaList[classifierIdx]:{0}".format(boosting.alphaList[classifierIdx]))
-    print("boosting.zList[classifierIdx]:{0}".format(boosting.zList[classifierIdx]))
-    print("boosting.eList[classifierIdx]:{0}".format(boosting.eList[classifierIdx]))
-
-    yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
-                                                           yList=yList,\
-                                                           baseClassifierList=baseClassifierList,\
-                                                           baseClassifierNum=classifierIdx+1,\
-                                                           baseClassifierReverseList=baseClassifierReverseList[:classifierIdx+1],\
-                                                           boostingClassifierReverse=boostingClassifierReverse)
-    print("errIdxList:{0}".format(errIdxList))
-    print("yHatList:{0}".format(yHatList))
-    print("errRate:{0}".format(errRate))
-    print
-
-# boosting分类器
-yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
-                                                       yList=yList, \
-                                                       baseClassifierList=baseClassifierList,\
-                                                       baseClassifierNum=boosting.baseClassifierNum,\
-                                                       baseClassifierReverseList=baseClassifierReverseList,\
-                                                       boostingClassifierReverse=boostingClassifierReverse)
-
-# boosting结果
-print("----- final boosting -----")
-print("yHatList:{0}".format(yHatList))
-print("errNum:{0}".format(errNum))
-print("errRate:{0}".format(errRate))
-print("errIdxList:{0}".format(errIdxList))
-print("boosting.alphaList:{0}".format(boosting.alphaList))
+# # 训练boosting
+# for classifierIdx in xrange(boosting.baseClassifierNum):
+#     # 初始化参数
+#     baseClassifierReverse = baseClassifierReverseList[classifierIdx]
+#     usedBaseClassifierNum = classifierIdx + 1
+#
+#     print("----- baseClassifier {0} -----".format(classifierIdx))
+#     # 依次遍历分类器
+#     baseClassifier = baseClassifierList[classifierIdx]
+#     yHatList, errNum, errRate, errIdxList = baseClassifier.train(xList=xList,\
+#                                                                  yList=yList,\
+#                                                                  reverse=baseClassifierReverse)
+#
+#     # 计算分类器误差
+#     print("errNum:{0}".format(errNum))
+#     print("errRate:{0}".format(errRate))
+#     print("errIdxList:{0}".format(errIdxList))
+#
+#     # 计算分类器误差率
+#     boosting.computeClassifierErrorRate(classifierIdx=classifierIdx,\
+#                                         yHatList=yHatList,\
+#                                         yList=yList)
+#
+#     # 计算分类器系数
+#     boosting.computeBaseClassifierCoefficient(classifierIdx=classifierIdx)
+#
+#     # 计算规范化因子
+#     boosting.computeNormalizationFactor(classifierIdx=classifierIdx,\
+#                                         yList=yList,\
+#                                         yHatList=yHatList)
+#
+#     # 计算数据集权重分布
+#     boosting.computeDataSetWeightDistribution(classifierIdx=classifierIdx,\
+#                                               yList=yList,\
+#                                               yHatList=yHatList)
+#
+#     # 打印分类器系数
+#     print("----- boosting -----")
+#     print("boosting.wList[classifierIdx]:{0}".format(boosting.wList[classifierIdx]))
+#     print("boosting.alphaList[classifierIdx]:{0}".format(boosting.alphaList[classifierIdx]))
+#     print("boosting.zList[classifierIdx]:{0}".format(boosting.zList[classifierIdx]))
+#     print("boosting.eList[classifierIdx]:{0}".format(boosting.eList[classifierIdx]))
+#
+#     yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
+#                                                            yList=yList,\
+#                                                            baseClassifierList=baseClassifierList,\
+#                                                            baseClassifierNum=usedBaseClassifierNum,\
+#                                                            baseClassifierReverseList=baseClassifierReverseList[:usedBaseClassifierNum],\
+#                                                            boostingClassifierReverse=boostingClassifierReverse)
+#     print("errIdxList:{0}".format(errIdxList))
+#     print("yHatList:{0}".format(yHatList))
+#     print("errRate:{0}".format(errRate))
+#     print
+#
+# # boosting分类器
+# yHatList, errNum, errRate, errIdxList = boosting.train(xList=xList,\
+#                                                        yList=yList, \
+#                                                        baseClassifierList=baseClassifierList,\
+#                                                        baseClassifierNum=boosting.baseClassifierNum,\
+#                                                        baseClassifierReverseList=baseClassifierReverseList,\
+#                                                        boostingClassifierReverse=boostingClassifierReverse)
+#
+# # boosting结果
+# print("----- final boosting -----")
+# print("yHatList:{0}".format(yHatList))
+# print("errNum:{0}".format(errNum))
+# print("errRate:{0}".format(errRate))
+# print("errIdxList:{0}".format(errIdxList))
+# print("boosting.alphaList:{0}".format(boosting.alphaList))
