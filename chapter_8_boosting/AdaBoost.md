@@ -110,12 +110,92 @@ $$
 
 **证明** 当 $G(x_i) \neq y_i$ 时， $y_i f(x_i) < 0$ ，因而 $\exp(-y_i f(x_i)) \geq 1.$ 由此直接导出前半部分.
 
-后半部分的推倒要用到 $Z_m$ 的定义式及 $w_{m,i}$ 的定义式的变形。
+后半部分的推倒要用到 $Z_m$ 及 $w_{m,i}$ 的定义式的变形。
+> **$Z_m$ 及 $w_{m,i}$ 的定义式**
+$$
+Z_m = \sum_{i=1}^N w_{m,i} \exp(-\alpha y_i G_m(x_i)) \\
+w_{m+1,i} = \frac{w_{m,i}}{Z_m} \exp(-\alpha_m y_i G_m(x_i)), i=1,2,...,N
+$$
 
 现推导如下：
+
 $$
-\frac{1}{N} \sum_i \exp(-y_i f(x_i)) \\
-= 
-\frac{1}{N} \sum_i \exp()
+\begin{align}
+& \frac{1}{N} \sum_i \exp(-y_i f(x_i)) \\
+= & \frac{1}{N} \sum_i \exp\left [ -\sum_{m=1}^{M} \alpha_m y_i G_m(x_i) \right ],
+其中 f(x_i) = \alpha_m G_m(x_i)
+\\
+= & \sum_i w_{1,i} \prod_{m=1}^{M} \exp(-\alpha_m y_i G_m(x_i)),
+其中 \frac{1}{N} = w_{1,i} ，自然数的指数变为连乘的形式
+\\
+= & Z_1 \sum_i w_{2,i} \prod_{m=2}^{M} \exp(-\alpha_m y_i G_m(x_i)),这里\prod和\sum的顺序感觉有点问题
+\\
+= & Z_1  Z_2 \sum_i w_{3,i} \prod_{m=3}^{M} \exp(-\alpha_m y_i G_m(x_i)) \\
+= & ... \\
+= & Z_1 Z_2 ... Z_{M-1} \sum_i w_{M,i} \exp(-\alpha_M y_i G_M(x_i)) \\
+= & \prod_{m=1}^{M} Z_m
+\end{align}
 $$
 
+该定理说明，在每一轮选取适当的 $G_m$ 过程中，使得 $Z_m$ 最小，从而使训练误差下降最快。对于二分类问题，有如下定理：
+
+**定理 8.2 （二分类问题 AdaBoost 的训练误差界）**
+$$
+\prod_{m=1}^{M} Z_m
+=
+\prod_{m=1}^{M}[ 2 \sqrt{e_m(1-e_m)}]
+=
+\prod_{m=1}^{M} \sqrt{(1-4\gamma_m^2)}
+\le
+\exp\left ( -2\sum_{m=1}^{M} \gamma_m^2 \right )
+$$
+
+这里，$\gamma = \frac{1}{2} - e_m.$
+
+**证明** 由 $Z_m$ 及 $e_m$ 的定义式得
+
+$$
+\begin{align}
+Z_m = & \sum_{i=1}^{N} w_{m,i} \exp(-\alpha_m y_i G_m(x_i)) \\
+= & \sum_{y_i=G_m(x_i)} w_{m,i} \exp(-\alpha_m) + \sum_{y_i \ne G_m(x_i)} w_{m,i} \exp(\alpha_m) \\
+= & (1-e_m)\exp(-\alpha_m) + e_m \exp(\alpha_m) \\
+= & 2 \sqrt{e_m(1-e_m)}, 莫非是a+b\leq2\sqrt{ab},但这里应该用\leq符号按理说\\
+= & \sqrt{1-4\gamma_m^2}
+\end{align} \\
+$$
+
+至于不等式
+
+$$
+\prod_{m=1}^M \sqrt{(1-4\gamma_m^2)}
+\le
+\exp(-2\sum_{m=1}^M \gamma_m^2)
+$$
+
+则可先由 $\exp(x)$ 和 $\sqrt{1-x}$ 在点 $0$ 的泰勒展开式推出不等式 $\sqrt{(1-4\gamma_m^2)} \leq \exp(-2\gamma_m^2)$ ，进而得到。
+
+>**泰勒公式**
+>在数学中，泰勒公式是一个用函数在某点的信息描述其附近取值的公式。如果函数足够平滑的话，在已知函数在某一点的各阶导数值的情况之下，泰勒公式可以用这些导数值做系数构建一个多项式来近似函数在这一点的邻域中的值。泰勒公式还给出了这个多项式和实际的函数值之间的偏差。
+>
+>**泰勒公式形式**
+>泰勒公式可以用（无限或者有限）若干项连加式（-级数）来表示一个函数，这些相加的项由函数在某一点（或者加上在临近的一个点的 $n+1$ 次导数）的导数求得。
+>
+>对于正整数 $n$ ，若函数 $f(x)$ 在闭区间 $[a,b]$ 上 $n$ 阶连续可导，且在 $(a,b)$ 上 $n+1$ 阶可导。任取 $x \in [a,b]$ 时的一个定点，则对任意 $x \in [a,b]$ 成立下式：
+>$$
+f(x)=\frac{f(a)}{0!} + 
+\frac{f'(a)}{1!} (x-a) + 
+\frac{f''(a)}{2!} (x-a)^2 + ... +
+\frac{f^{(n)}(a)}{n!} (x-a)^n + 
+R_n(x)
+$$
+>其中， $f^{(n)}(x)$ 表示 $f(x)$ 的 $n$ 阶导数，多项式称为函数 $f(x)$ 在 $a$ 处的泰勒展开式，剩余的 $R_n(x)$ 是泰勒公式的余项（这里省略），是 $(x-a)^n$ 的高阶无穷小。
+
+**推论 8.1** 如果存在 $\gamma \gt 0$ ，对所有 $m$ ，有 $\gamma_m \geq \gamma$ ，则
+
+$$
+\frac{1}{N} \sum_{i=1}^{N} I(G(x_i) \neq y_i) \leq \exp(-2M\gamma^2)
+$$
+
+这表明在此条件下的 AdaBoost 的训练误差是以指数速率下降的。这一性质当然是很有吸引力的。
+
+注意， AdaBoost 算法不需要知道下界 $\gamma$ 。这正是 Freund 和 Schapire 设计 AdaBoost 时所考虑的。与一些早期的提升方法不同， AdaBoost 具有适应性，即它能适应弱分类器各自的训练误差率。这也是它的名称（适应地提升，即 Adaptive Boost ）的由来。
