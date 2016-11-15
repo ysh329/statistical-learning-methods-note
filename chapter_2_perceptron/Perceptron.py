@@ -76,14 +76,17 @@ class Perceptron(object):
         停止迭代。
         :return:
         '''
-        # costList 用于记录每轮 epoch 的损失函数值
+        # costList 和 misRateList 用于记录每轮 epoch 的损失函数
+        # 值和错分率
         costList = []
+        misRateList = []
         for epochIdx in xrange(maxEpoch):
             # 记录当前这一轮的预测类别，
             # 在之后判断本轮是否全部预测正确
             # 全部正确则停止迭代
             curEpochYHatList = []
             cost = 0.0
+            errNum = 0.0
             print("======= epochIdx {0} =======".format(epochIdx))
             for sampleIdx in xrange(len(xList)):
                 # 初始参数
@@ -108,23 +111,28 @@ class Perceptron(object):
                     b = self.bList[-1] + self.eta * y
                     self.wList.append(w)
                     self.bList.append(b)
+                    errNum += 1.0
                 else:
                     # 预测正确追加参数占位
                     self.wList.append(self.wList[-1])
                     self.bList.append(self.bList[-1])
+
+            # 追加保存本轮结束后的损失函数值和错分率并打印出来
+            costList.append(cost)
+            misRate = errNum/len(curEpochYHatList)
+            misRateList.append(misRate)
+            print(">>> cost:{0}".format(cost))
+            print(">>> misRate:{0}".format(misRate))
             # 判断本轮训练后的所有预测是否完全正确
             if curEpochYHatList == yList:
                 # 训练集全部正确则停止迭代
                 break
-            # 追加保存本轮结束后的损失函数值并打印出来
-            costList.append(cost)
-            print("cost:{0}".format(cost))
             print
 
         parameterDict = dict()
         parameterDict['w'] = self.wList[-1]
         parameterDict['b'] = self.bList[-1]
-        return parameterDict
+        return parameterDict, costList, misRateList
 
     def predict(self, x, iterIdx=None):
         '''
@@ -162,6 +170,44 @@ class Perceptron(object):
         else:
             return -1
 
+    def plotChart(self, costList, misRateList):
+        '''
+        绘制错分率和损失函数值随 epoch 变化的曲线。
+        :param costList: 训练过程中每个epoch的损失函数列表
+        :param misRateList: 训练过程中每个epoch的错分率列表
+        :return:
+        '''
+        # 导入绘图库
+        import matplotlib.pyplot as plt
+        # 新建画布
+        plt.figure('Perceptron Cost and Mis-classification Rate',figsize=(8, 9))
+        # 设定两个子图和位置关系
+        ax1 = plt.subplot(211)
+        ax2 = plt.subplot(212)
+
+        # 选择子图1并绘制损失函数值折线图及相关坐标轴
+        plt.sca(ax1)
+        plt.plot(xrange(1, len(costList)+1), costList, '--b*')
+        plt.xlabel('Epoch No.')
+        plt.ylabel('Cost')
+        plt.title('Plot of Cost Function')
+        plt.grid()
+        ax1.legend(u"Cost", loc='best')
+
+        # 选择子图2并绘制错分率折线图及相关坐标轴
+        plt.sca(ax2)
+        plt.plot(xrange(1, len(misRateList)+1), misRateList, '-r*')
+        plt.xlabel('Epoch No.')
+        plt.ylabel('Mis-classification Rate')
+        plt.title('Plot of Mis-classification Rate')
+        plt.grid()
+        ax2.legend(u'Mis-classification Rate', loc='best')
+
+        # 显示图像并打印和保存
+        # 需要先保存再绘图否则相当于新建了一张新空白图像然后保存
+        plt.savefig('./PerceptronPlot.png')
+        plt.show()
+
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
@@ -185,9 +231,9 @@ if __name__ == "__main__":
 
     # 训练感知器
     print("====== train ======")
-    parameterDict = p.train(xList=xList,\
-                            yList=yList,\
-                            maxEpoch=maxEpoch)
+    parameterDict, costList, misRateList = p.train(xList=xList,\
+                                                   yList=yList,\
+                                                   maxEpoch=maxEpoch)
 
     # 打印结果
     print("====== result ======")
@@ -204,3 +250,7 @@ if __name__ == "__main__":
 
     print("len(p.wList):{0}".format(len(p.wList)))
     print("len(p.wList):{0}".format(len(p.bList)))
+
+    # 绘制损失函数和错分率随 epoch 变化的图像
+    p.plotChart(costList=costList,\
+                misRateList=misRateList)
