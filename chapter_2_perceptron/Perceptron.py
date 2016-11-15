@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ################################### PART0 DESCRIPTION #################################
-# Filename: perceptron.py
+# Filename: Perceptron.py
 # Description:
 #
 
