@@ -32,7 +32,7 @@ def readDataFrom(path, hasHeader=True):
                            (int(recordList[0]), int(recordList[1]), int(recordList[2])),\
                        rawData[1:])
         else:
-            print("Header:None")
+            print("header:None")
             cleanData = map(lambda recordList:\
                            (int(recordList[0]), int(recordList[1]), int(recordList[2])),\
                        rawData)
