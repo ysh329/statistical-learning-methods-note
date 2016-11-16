@@ -170,7 +170,7 @@ class Perceptron(object):
         else:
             return -1
 
-    def plotChart(self, costList, misRateList):
+    def plotChart(self, costList, misRateList, saveFigPath):
         '''
         绘制错分率和损失函数值随 epoch 变化的曲线。
         :param costList: 训练过程中每个epoch的损失函数列表
@@ -205,7 +205,7 @@ class Perceptron(object):
 
         # 显示图像并打印和保存
         # 需要先保存再绘图否则相当于新建了一张新空白图像然后保存
-        plt.savefig('./PerceptronPlot.png')
+        plt.savefig(saveFigPath)
         plt.show()
 
 ################################### PART3 TEST ########################################
@@ -215,6 +215,9 @@ if __name__ == "__main__":
     dataPath = "./input"
     maxEpoch = 1000
     learningRate = 10E-2
+    saveFigPath = './PerceptronPlot.png'
+
+    # 加载训练数据
     idList, xList, yList = readDataFrom(path=dataPath)
     print("idList:{0}".format(idList))
     print("xList:{0}".format(xList))
@@ -253,4 +256,5 @@ if __name__ == "__main__":
 
     # 绘制损失函数和错分率随 epoch 变化的图像
     p.plotChart(costList=costList,\
-                misRateList=misRateList)
+                misRateList=misRateList,\
+                saveFigPath=saveFigPath)
