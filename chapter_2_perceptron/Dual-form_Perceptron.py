@@ -65,19 +65,17 @@ class DualFormPerceptron(object):
         self.bList = [random.random()]
 
     def constructGramMatrix(self, xList):
-        # 错误的二维list创建方法：因为浅拷贝的问题
-        self.gramMatrix = [range(self.sampleNum)] * self.sampleNum
+        self.gramMatrix = [[0 for col in xrange(self.sampleNum)] for row in xrange(self.sampleNum)]
         print self.gramMatrix
         for idx1 in xrange(self.sampleNum):
             for idx2 in xrange(self.sampleNum):
-                # if idx1 <= idx2:
-                innerProd = sum(\
-                    map(lambda xx1, xx2:\
-                            xx1 * xx2,\
-                        xList[idx1], xList[idx2])\
-                    )
-                print idx1,idx2,innerProd
-                self.gramMatrix[idx1][idx2] = innerProd
+                if idx1 <= idx2:
+                    innerProd = sum(\
+                        map(lambda xx1, xx2:\
+                                xx1 * xx2,\
+                            xList[idx1], xList[idx2])\
+                        )
+                    self.gramMatrix[idx1][idx2] = self.gramMatrix[idx2][idx1] = innerProd
 
 
         for i in xrange(self.sampleNum):
