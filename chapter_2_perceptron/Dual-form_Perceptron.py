@@ -65,6 +65,11 @@ class DualFormPerceptron(object):
         self.bList = [random.random()]
 
     def constructGramMatrix(self, xList):
+        '''
+        构造 Gram 矩阵
+        :param xList:
+        :return:
+        '''
         self.gramMatrix = [[0 for col in xrange(self.sampleNum)] for row in xrange(self.sampleNum)]
         print self.gramMatrix
         for idx1 in xrange(self.sampleNum):
@@ -78,14 +83,25 @@ class DualFormPerceptron(object):
                     self.gramMatrix[idx1][idx2] = self.gramMatrix[idx2][idx1] = innerProd
 
 
-        for i in xrange(self.sampleNum):
-            for j in xrange(self.sampleNum):
-                print self.gramMatrix[i][j],
-            print
+    def train(self, xList, yList):
+        for sampleIdx in xrange(len(xList)):
+            x = xList[sampleIdx]
+            y = yList[sampleIdx]
 
-        print str(self.gramMatrix)
-        print xList[0], xList[1]
-        print self.gramMatrix[0][1]
+
+    def sign(self, v):
+        '''
+        符号函数，传入参数 v 大于 0 则为返回 1 ，小于 0 返回 -1 ，
+        等于 0 则返回 0 。
+        :param v: 传入参数
+        :return: 返回传入参数的正负性
+        '''
+        if v > 0.0:
+            return 1
+        elif v == 0.0:
+            return 0
+        else:
+            return -1
 
 
 if __name__ == "__main__":
