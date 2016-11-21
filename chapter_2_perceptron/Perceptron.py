@@ -66,13 +66,13 @@ class Perceptron(object):
                          xrange(featureNum))]
         self.bList = [random.random()]
 
-    def train(self, xList, yList, maxEpoch):
+    def train(self, xList, yList, maxEpochNum):
         '''
         基于随机梯度下降算法对感知器参数更新，训练最大轮数为 maxEpoch ，
         当训练集完全预测正确则停止训练。
         :param xList: 训练集的特征数据
         :param yList: 训练集的真实类别
-        :param maxEpoch: 最大迭代次数，若某轮 epoch 预测完全正确则
+        :param maxEpochNum: 最大迭代次数，若某轮 epoch 预测完全正确则
         停止迭代。
         :return:
         '''
@@ -80,7 +80,7 @@ class Perceptron(object):
         # 值和错分率
         costList = []
         misRateList = []
-        for epochIdx in xrange(maxEpoch):
+        for epochIdx in xrange(maxEpochNum):
             # 记录当前这一轮的预测类别，
             # 在之后判断本轮是否全部预测正确
             # 全部正确则停止迭代
@@ -213,7 +213,7 @@ class Perceptron(object):
 if __name__ == "__main__":
     # 初始化参数
     dataPath = "./input"
-    maxEpoch = 1000
+    maxEpochNum = 1000
     learningRate = 10E-2
     saveFigPath = './PerceptronPlot.png'
 
@@ -234,9 +234,9 @@ if __name__ == "__main__":
 
     # 训练感知器
     print("====== train ======")
-    parameterDict, costList, misRateList = p.train(xList=xList,\
-                                                   yList=yList,\
-                                                   maxEpoch=maxEpoch)
+    parameterDict, costList, misRateList = p.train(xList=xList, \
+                                                   yList=yList, \
+                                                   maxEpochNum=maxEpochNum)
 
     # 打印结果
     print("====== result ======")
