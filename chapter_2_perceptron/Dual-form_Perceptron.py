@@ -59,10 +59,11 @@ class DualFormPerceptron(object):
         self.eta = learningRate
 
         # 随机初始化参数
-        self.wList = [map(lambda wIdx: \
-                              random.random(), \
-                          xrange(featureNum))]
-        self.bList = [random.random()]
+        self.alphaList = [map(lambda i:\
+                                  0.0, #random.random(),\
+                              xrange(self.sampleNum))\
+                          ]
+        self.bList = [0.0] #[random.random()]
 
     def constructGramMatrix(self, xList):
         '''
@@ -82,12 +83,57 @@ class DualFormPerceptron(object):
                         )
                     self.gramMatrix[idx1][idx2] = self.gramMatrix[idx2][idx1] = innerProd
 
+    def train(self, xList, yList, maxEpochNum):
+        for epochIdx in xrange(maxEpochNum):
+            print("======= epochIdx {0} =======".format(epochIdx))
+            for sampleIdxI in xrange(len(xList)):
+                x = xList[sampleIdxI]
+                yHat, sigma = self.predict(x,\
+                                           xList,\
+                                           yList,\
+                                           useGramMatrix=True,\
+                                           sampleIdxI=sampleIdxI,\
+                                           iterIdx=None)
+                cost = yList[sampleIdxI] * sigma
+                # 打印cost
+                iterIdx = epochIdx * len(xList) + sampleIdxI
+                print("== iterIdx:{0} ==".format(iterIdx))
+                print("cost:{0}".format(cost))
+                # 判断是否进行参数更新
+                if cost <= 0:
+                    nextAlpha = self.alphaList[epochIdx][sampleIdxI] + self.eta
+                    nextB = self.bList[epochIdx] + self.eta * yList[sampleIdxI]
+                else:
+                    nextAlpha = self.alphaList[-1]
+                    nextB = self.bList[-1]
+                self.alphaList.append(nextAlpha)
+                self.bList.append(nextB)
+            print map(lambda x: self.predict(x, xList, yList), xList)
 
-    def train(self, xList, yList):
-        for sampleIdx in xrange(len(xList)):
-            x = xList[sampleIdx]
-            y = yList[sampleIdx]
 
+    def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=None):
+        if iterIdx is None:
+            iterIdx = -1
+        if useGramMatrix:
+            sigma = sum(\
+                    map(lambda sampleIdxJ:\
+                            self.alphaList[iterIdx][sampleIdxJ] *\
+                            yList[sampleIdxJ] *\
+                            self.gramMatrix[sampleIdxI][sampleIdxJ],\
+                        xrange(len(xList)))\
+                    ) + self.bList[iterIdx]
+        else:
+            sigma = sum(\
+                map(lambda sampleIdxJ:\
+                        self.alphaList[iterIdx][sampleIdxJ] *\
+                        yList[sampleIdxJ] *\
+                        xList[sampleIdxJ] *\
+                        x,\
+                    xrange(len(self.sampleNum)))\
+                ) + self.bList[iterIdx]
+
+        yHat = self.sign(sigma)
+        return yHat, sigma
 
     def sign(self, v):
         '''
@@ -103,10 +149,13 @@ class DualFormPerceptron(object):
         else:
             return -1
 
-
+################################### PART3 TEST ########################################
+# 例子
 if __name__ == "__main__":
+
     dataPath = "./input"
     learningRate = 10E-3
+    maxEpochNum = 1
 
     idList, xList, yList = readDataFrom(path=dataPath,\
                                         hasHeader=True)
@@ -119,3 +168,7 @@ if __name__ == "__main__":
                              learningRate=learningRate)
 
     dfp.constructGramMatrix(xList=xList)
+
+    dfp.train(xList=xList,\
+              yList=yList,\
+              maxEpochNum=1)
