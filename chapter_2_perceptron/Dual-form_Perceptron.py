@@ -45,7 +45,9 @@ def readDataFrom(path, hasHeader=True):
 
 
 class DualFormPerceptron(object):
-
+    '''
+    对偶形式-感知器类，基于随机梯度下降法训练感知器算法，遇到分类分类错误样本进行参数更新。
+    '''
     def __init__(self, sampleNum, featureNum, learningRate=10E-4):
         '''
         初始化感知器。
@@ -67,8 +69,8 @@ class DualFormPerceptron(object):
 
     def constructGramMatrix(self, xList):
         '''
-        构造 Gram 矩阵
-        :param xList:
+        构造 Gram 矩阵。该矩阵中的每个元素是每两个样本间对应特征的点积和。
+        :param xList: 输入样本特征
         :return:
         '''
         self.gramMatrix = [[0 for col in xrange(self.sampleNum)] for row in xrange(self.sampleNum)]
@@ -84,6 +86,17 @@ class DualFormPerceptron(object):
                     self.gramMatrix[idx1][idx2] = self.gramMatrix[idx2][idx1] = innerProd
 
     def train(self, xList, yList, maxEpochNum):
+        '''
+        基于随机梯度下降算法对感知器参数更新，训练最大轮数为 maxEpoch ，
+        当训练集完全预测正确则停止训练。
+        :param xList: 训练集的特征数据
+        :param yList: 训练集的真实类别
+        :param maxEpochNum: 最大迭代次数，若某轮 epoch 预测完全正确则
+        停止迭代。
+        :return:
+        '''
+        # costList 和 misRateList 用于记录每轮 epoch 的损失函数
+        # 值和错分率
         costList = []
         misRateList = []
         for epochIdx in xrange(maxEpochNum):
@@ -136,16 +149,27 @@ class DualFormPerceptron(object):
             if misRate == 0.0:
                 break
 
+        # 最终参数打包为字典
         parameterDict = dict()
         parameterDict['alpha'] = self.alphaList[-1]
         parameterDict['b'] = self.bList[-1]
         return parameterDict, costList, misRateList
 
-
-
-    def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=None):
-        if iterIdx is None:
-            iterIdx = -1
+    def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=-1):
+        '''
+        预测输入样本 x 的所属类别。由于是对偶形式，所以也需要传入训练数据集的特征和标签，
+        训练过程中，需要指定 userGramMatrix , sampleIdxI 参数，
+        iterIdx 可以使用模型训练完成后使用某 iterIdx 次训练得到的模型参数进行预测，
+        默认使用最后一次模型参数。
+        :param x: 输入样本 x 的特征
+        :param xList: 训练数据集的特征
+        :param yList: 训练数据集的真实标签
+        :param useGramMatrix: 是否使用 Gram 矩阵，训练时需指定
+        :param sampleIdxI: 当前样本位于训练集的下标，训练时需指定
+        :param iterIdx: 使用哪一次的模型参数预测，默认使用最后一次
+        :return: 返回输入样本 x 的预测类别和 sigma
+        '''
+        # 是否使用 Gram 矩阵
         if useGramMatrix:
             sigma = sum(\
                     map(lambda sampleIdxJ:\
@@ -225,28 +249,30 @@ class DualFormPerceptron(object):
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
-
+    # 参数初始化
     dataPath = "./input"
     learningRate = 10E-3
     maxEpochNum = 10000
     saveFigPath = "./DualFormPerceptronPlot.png"
 
+    # 读取训练数据
     idList, xList, yList = readDataFrom(path=dataPath,\
                                         hasHeader=True)
     print("idList:{0}".format(idList))
     print("xList:{0}".format(xList))
     print("yList:{0}".format(yList))
 
+    # 对偶形式感知机类的实例化
     dfp = DualFormPerceptron(sampleNum=len(xList),\
                              featureNum=len(xList[0]),\
                              learningRate=learningRate)
-
+    # 基于训练集构造 Gram 矩阵
     dfp.constructGramMatrix(xList=xList)
-
+    # 训练模型
     parameterDict, costList, misRateList = dfp.train(xList=xList,\
                                                      yList=yList,\
                                                      maxEpochNum=maxEpochNum)
-
+    # 绘制模型的损失函数及错分率性能图像
     dfp.plotChart(costList=costList,\
                   misRateList=misRateList,\
                   saveFigPath=saveFigPath)
