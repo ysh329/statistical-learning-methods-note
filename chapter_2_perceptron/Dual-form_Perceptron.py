@@ -59,8 +59,8 @@ class DualFormPerceptron(object):
         self.eta = learningRate
 
         # 随机初始化参数
-        self.alphaList = [map(lambda i:\
-                                  0.0, #random.random(),\
+        self.alphaList = [map(lambda i: \
+                                  0.0, #random.random(),
                               xrange(self.sampleNum))\
                           ]
         self.bList = [0.0] #[random.random()]
@@ -84,8 +84,11 @@ class DualFormPerceptron(object):
                     self.gramMatrix[idx1][idx2] = self.gramMatrix[idx2][idx1] = innerProd
 
     def train(self, xList, yList, maxEpochNum):
+        costList = []
+        misRateList = []
         for epochIdx in xrange(maxEpochNum):
             print("======= epochIdx {0} =======".format(epochIdx))
+            curEpochCostList = []
             for sampleIdxI in xrange(len(xList)):
                 x = xList[sampleIdxI]
                 yHat, sigma = self.predict(x,\
@@ -95,20 +98,49 @@ class DualFormPerceptron(object):
                                            sampleIdxI=sampleIdxI,\
                                            iterIdx=None)
                 cost = yList[sampleIdxI] * sigma
+                curEpochCostList.append(cost)
                 # 打印cost
                 iterIdx = epochIdx * len(xList) + sampleIdxI
                 print("== iterIdx:{0} ==".format(iterIdx))
                 print("cost:{0}".format(cost))
                 # 判断是否进行参数更新
                 if cost <= 0:
-                    nextAlpha = self.alphaList[epochIdx][sampleIdxI] + self.eta
+                    nextAlpha = self.alphaList[epochIdx]
+                    nextAlpha[sampleIdxI] += self.eta
+                    #nextAlpha = self.alphaList[epochIdx][sampleIdxI] + self.eta
                     nextB = self.bList[epochIdx] + self.eta * yList[sampleIdxI]
                 else:
                     nextAlpha = self.alphaList[-1]
                     nextB = self.bList[-1]
                 self.alphaList.append(nextAlpha)
                 self.bList.append(nextB)
-            print map(lambda x: self.predict(x, xList, yList), xList)
+            # 判断当前参数的预测性能
+            curEpochPredictTupleList = map(lambda x:\
+                                           self.predict(x, xList, yList),\
+                                       xList)
+            curEpochResultList = map(lambda idx, (yHat, sigma), y:\
+                                         (idx, yHat, y, y == yHat, sigma),\
+                                     xrange(len(curEpochPredictTupleList)), curEpochPredictTupleList, yList)
+            curEpochCorrectNum = len(\
+                filter(lambda (idx, yHat, y, isCorrectPredict, sigma):\
+                           isCorrectPredict,\
+                       curEpochResultList)\
+                )
+            misRate = 1.0 - float(curEpochCorrectNum) / len(curEpochResultList)
+            print("misRate:{0}".format(misRate))
+            misRateList.append(misRate)
+            curEpochCost = sum(curEpochCostList)
+            print("cost:{0}".format(curEpochCost))
+            costList.append(curEpochCost)
+            print
+            if misRate == 0.0:
+                break
+
+        parameterDict = dict()
+        parameterDict['alpha'] = self.alphaList[-1]
+        parameterDict['b'] = self.bList[-1]
+        return parameterDict, costList, misRateList
+
 
 
     def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=None):
@@ -127,9 +159,12 @@ class DualFormPerceptron(object):
                 map(lambda sampleIdxJ:\
                         self.alphaList[iterIdx][sampleIdxJ] *\
                         yList[sampleIdxJ] *\
-                        xList[sampleIdxJ] *\
-                        x,\
-                    xrange(len(self.sampleNum)))\
+                        sum(\
+                            map(lambda xx1, xx2:\
+                                    xx1 * xx2,\
+                                x, xList[sampleIdxJ])\
+                            ),\
+                    xrange(len(xList)))\
                 ) + self.bList[iterIdx]
 
         yHat = self.sign(sigma)
@@ -149,13 +184,52 @@ class DualFormPerceptron(object):
         else:
             return -1
 
+    def plotChart(self, costList, misRateList, saveFigPath):
+        '''
+        绘制错分率和损失函数值随 epoch 变化的曲线。
+        :param costList: 训练过程中每个epoch的损失函数列表
+        :param misRateList: 训练过程中每个epoch的错分率列表
+        :return:
+        '''
+        # 导入绘图库
+        import matplotlib.pyplot as plt
+        # 新建画布
+        plt.figure('Perceptron Cost and Mis-classification Rate', figsize=(8, 9))
+        # 设定两个子图和位置关系
+        ax1 = plt.subplot(211)
+        ax2 = plt.subplot(212)
+
+        # 选择子图1并绘制损失函数值折线图及相关坐标轴
+        plt.sca(ax1)
+        plt.plot(xrange(1, len(costList) + 1), costList, '--b*')
+        plt.xlabel('Epoch No.')
+        plt.ylabel('Cost')
+        plt.title('Plot of Cost Function')
+        plt.grid()
+        ax1.legend(u"Cost", loc='best')
+
+        # 选择子图2并绘制错分率折线图及相关坐标轴
+        plt.sca(ax2)
+        plt.plot(xrange(1, len(misRateList) + 1), misRateList, '-r*')
+        plt.xlabel('Epoch No.')
+        plt.ylabel('Mis-classification Rate')
+        plt.title('Plot of Mis-classification Rate')
+        plt.grid()
+        ax2.legend(u'Mis-classification Rate', loc='best')
+
+        # 显示图像并打印和保存
+        # 需要先保存再绘图否则相当于新建了一张新空白图像然后保存
+        plt.savefig(saveFigPath)
+        plt.show()
+
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
 
     dataPath = "./input"
     learningRate = 10E-3
-    maxEpochNum = 1
+    maxEpochNum = 10000
+    saveFigPath = "./DualFormPerceptronPlot.png"
 
     idList, xList, yList = readDataFrom(path=dataPath,\
                                         hasHeader=True)
@@ -169,6 +243,10 @@ if __name__ == "__main__":
 
     dfp.constructGramMatrix(xList=xList)
 
-    dfp.train(xList=xList,\
-              yList=yList,\
-              maxEpochNum=1)
+    parameterDict, costList, misRateList = dfp.train(xList=xList,\
+                                                     yList=yList,\
+                                                     maxEpochNum=maxEpochNum)
+
+    dfp.plotChart(costList=costList,\
+                  misRateList=misRateList,\
+                  saveFigPath=saveFigPath)
