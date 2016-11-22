@@ -46,7 +46,7 @@ def readDataFrom(path, hasHeader=True):
 
 class Perceptron(object):
     '''
-    感知器的类，基于随机梯度下降法训练感知器算法。
+    原始形式-感知器类，基于随机梯度下降法训练感知器算法，遇到分类分类错误样本进行参数更新。
     '''
     def __init__(self, sampleNum, featureNum, learningRate=10E-4):
         '''
