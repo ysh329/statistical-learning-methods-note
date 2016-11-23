@@ -252,7 +252,7 @@ if __name__ == "__main__":
     print("p.bList:{0}".format(p.bList))
 
     print("len(p.wList):{0}".format(len(p.wList)))
-    print("len(p.wList):{0}".format(len(p.bList)))
+    print("len(p.bList):{0}".format(len(p.bList)))
 
     # 绘制损失函数和错分率随 epoch 变化的图像
     p.plotChart(costList=costList,\
