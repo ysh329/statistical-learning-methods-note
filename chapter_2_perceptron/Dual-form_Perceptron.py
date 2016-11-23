@@ -155,7 +155,7 @@ class DualFormPerceptron(object):
         parameterDict['b'] = self.bList[-1]
         return parameterDict, costList, misRateList
 
-    def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=-1):
+    def predict(self, x, xList, yList, useGramMatrix=False, sampleIdxI=None, iterIdx=None):
         '''
         预测输入样本 x 的所属类别。由于是对偶形式，所以也需要传入训练数据集的特征和标签，
         训练过程中，需要指定 userGramMatrix , sampleIdxI 参数，
@@ -169,6 +169,9 @@ class DualFormPerceptron(object):
         :param iterIdx: 使用哪一次的模型参数预测，默认使用最后一次
         :return: 返回输入样本 x 的预测类别和 sigma
         '''
+        # 使用第几次的模型参数（默认为最后一次，即元素下标为-1）
+        if iterIdx == None:
+            iterIdx = -1
         # 是否使用 Gram 矩阵
         if useGramMatrix:
             sigma = sum(\
