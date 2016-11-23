@@ -275,6 +275,27 @@ if __name__ == "__main__":
     parameterDict, costList, misRateList = dfp.train(xList=xList,\
                                                      yList=yList,\
                                                      maxEpochNum=maxEpochNum)
+    # 打印结果
+    print("====== result ======")
+    print("parameterDict['alpha']:{0}".format(parameterDict['alpha']))
+    print("parameterDict['b']:{0}".format(parameterDict['b']))
+
+    print("yList:{0}".format(yList))
+    print("yHatList:{0}".format(map(lambda x: \
+                                        dfp.predict(x=x, \
+                                                    xList=xList,\
+                                                    yList=yList,\
+                                                    useGramMatrix=False,\
+                                                    sampleIdxI=None,\
+                                                    iterIdx=None), \
+                                    xList)))
+
+    print("dfp.alphaList:{0}".format(dfp.alphaList))
+    print("dfp.bList:{0}".format(dfp.bList))
+
+    print("len(dfp.alphaList):{0}".format(len(dfp.alphaList)))
+    print("len(dfp.bList):{0}".format(len(dfp.bList)))
+
     # 绘制模型的损失函数及错分率性能图像
     dfp.plotChart(costList=costList,\
                   misRateList=misRateList,\
