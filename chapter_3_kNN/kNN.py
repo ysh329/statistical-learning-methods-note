@@ -70,6 +70,42 @@ class kNN(object):
        distance = math.pow(sigma.__abs__(), 1.0/p)
        return distance
 
+   def train(self, xList, yList, p=None):
+       if p == None:
+           p = self.p
+
+
+   def predict(self, x, xList, yList, p=None):
+       if p == None:
+           p = self.p
+       distAndXAndXXAndYTupList = map(lambda xx, y:\
+                                          (x,\
+                                           xx,\
+                                           self.distanceBetween(aList=x,\
+                                                                bList=xx,\
+                                                                p=p),
+                                           y),\
+                                      xList, yList)
+       distAndXAndXXAndYTupList.sort(key=lambda (x, xx, dist, y): dist,\
+                                     reverse=False)
+       yDict = {}
+       for idx in xrange(self.kNum):
+           # (x, xx, dist, y)
+           y = distAndXAndXXAndYTupList[:self.kNum][3]
+           if yDict.has_key(y):
+               yDict[y] += 1
+           else:
+               yDict[y] = 1
+       yAndCountTupList = map(lambda (y, count):\
+                                  (y, count),\
+                              yDict.iteritems())
+       yAndCountTupList.sort(key=lambda (y, count): count,\
+                             reverse=True)
+       yHat = yAndCountTupList[0][0]
+       return yHat
+
+
+
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
