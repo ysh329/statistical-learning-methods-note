@@ -39,72 +39,94 @@ def readDataFrom(path, hasHeader=True):
                                 map(int, recordList), \
                             rawData)
         idList = map(lambda r: r[0], cleanData)
-        xList = map(lambda r: r[1:len(r)-1], cleanData)
+        xList = map(lambda r: tuple(r[1:len(r)-1]), cleanData)
         yList = map(lambda r: r[-1], cleanData)
         return idList, xList, yList
 
 
 class kNN(object):
 
-   def __init__(self, sampleNum, featureNum, kNum=None, distancePValue=None):
-       if kNum == None:
-           kNum = 1
-       if distancePValue == None:
+    def __init__(self, sampleNum, featureNum, kNum=None, distancePValue=None):
+        if kNum == None:
+            kNum = 1
+        if distancePValue == None:
             distancePValue = 2
 
-       self.sampleNum = sampleNum
-       self.featureNum = featureNum
-       self.kNum = kNum
-       self.p = float(distancePValue)
+        self.sampleNum = sampleNum
+        self.featureNum = featureNum
+        self.kNum = kNum
+        self.p = float(distancePValue)
+        self.distMatrix = dict()
 
-   def distanceBetween(self, aList, bList, p=None):
-       if p == None:
-           p = self.p
+    def constructDistMatrix(self, xList, p=None):
+        if p == None:
+            p = self.p
+        # 初始化
+        for x1Idx in xrange(len(xList)):
+            x1 = xList[x1Idx]
+            if not self.distMatrix.has_key(x1):
+                self.distMatrix[x1] = dict()
+            for x2Idx in xrange(len(xList)):
+                x2 = xList[x2Idx]
+                if not self.distMatrix[x1].has_key(x2):
+                    self.distMatrix[x1][x2] = 0.0
+       # 计算距离
+        for x1Idx in xrange(len(xList)):
+            for x2Idx in xrange(len(xList)):
+                x1 = xList[x1Idx]
+                x2 = xList[x2Idx]
+                if x1Idx != x2Idx and self.distMatrix[x1][x2] == 0.0:
+                    self.distMatrix[x1][x2] = self.distanceBetween(aList=x1,\
+                                                                   bList=x2,\
+                                                                   p=p)
+                    self.distMatrix[x2][x1] = self.distMatrix[x1][x2]
 
-       import math
-       sigma = sum(\
-           map(lambda aa, bb:\
-                   math.pow(aa-bb, p),\
-               aList, bList)\
-           )
-       distance = math.pow(sigma.__abs__(), 1.0/p)
-       return distance
+        print self.distMatrix
 
-   def train(self, xList, yList, p=None):
-       if p == None:
-           p = self.p
+    def distanceBetween(self, aList, bList, p=None):
+        if p == None:
+             p = self.p
+        import math
+        sigma = sum(\
+             map(lambda aa, bb:\
+                     math.pow(aa-bb, p),\
+                 aList, bList)\
+             )
+        distance = math.pow(sigma.__abs__(), 1.0/p)
+        return distance
 
+    def train(self, xList, yList, p=None):
+        if p == None:
+            p = self.p
 
-   def predict(self, x, xList, yList, p=None):
-       if p == None:
-           p = self.p
-       distAndXAndXXAndYTupList = map(lambda xx, y:\
-                                          (x,\
-                                           xx,\
-                                           self.distanceBetween(aList=x,\
-                                                                bList=xx,\
-                                                                p=p),
-                                           y),\
-                                      xList, yList)
-       distAndXAndXXAndYTupList.sort(key=lambda (x, xx, dist, y): dist,\
-                                     reverse=False)
-       yDict = {}
-       for idx in xrange(self.kNum):
-           # (x, xx, dist, y)
-           y = distAndXAndXXAndYTupList[:self.kNum][3]
-           if yDict.has_key(y):
-               yDict[y] += 1
-           else:
-               yDict[y] = 1
-       yAndCountTupList = map(lambda (y, count):\
-                                  (y, count),\
-                              yDict.iteritems())
-       yAndCountTupList.sort(key=lambda (y, count): count,\
-                             reverse=True)
-       yHat = yAndCountTupList[0][0]
-       return yHat
-
-
+    def predict(self, x, xList, yList, p=None):
+        if p == None:
+            p = self.p
+        xAndXXAndDistAndYTupList = map(lambda xx, y:\
+                                           (x,\
+                                            xx,\
+                                            self.distanceBetween(aList=x,\
+                                                                 bList=xx,\
+                                                                 p=p),
+                                            y),\
+                                       xList, yList)
+        xAndXXAndDistAndYTupList.sort(key=lambda (x, xx, dist, y): dist,\
+                                      reverse=False)
+        yDict = {}
+        for idx in xrange(self.kNum):
+            # (x, xx, dist, y)
+            y = xAndXXAndDistAndYTupList[idx][3]
+            if yDict.has_key(y):
+                yDict[y] += 1
+            else:
+                yDict[y] = 1
+        yAndCountTupList = map(lambda (y, count):\
+                                   (y, count),\
+                               yDict.iteritems())
+        yAndCountTupList.sort(key=lambda (y, count): count,\
+                              reverse=True)
+        yHat = yAndCountTupList[0][0]
+        return yHat
 
 ################################### PART3 TEST ########################################
 # 例子
@@ -127,6 +149,8 @@ if __name__ == "__main__":
               kNum=kNum,\
               distancePValue=distancePValue)
 
-    print knn.distanceBetween(aList=[1,3,5],
-                        bList=[2,4,6],\
-                              p=2)
+    knn.constructDistMatrix(xList=xList)
+
+    print knn.predict(x=(1,3),\
+                      xList=xList,\
+                      yList=yList)
