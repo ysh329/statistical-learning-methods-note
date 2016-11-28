@@ -11,7 +11,7 @@ __author__ = 'yuens'
 
 
 ################################### PART1 IMPORT ######################################
-import random
+import math
 
 ################################### PART2 CLASS && FUNCTION ###########################
 
@@ -30,14 +30,13 @@ def readDataFrom(path, hasHeader=True):
         if hasHeader:
             header = rawData[0]
             print("header:{0}".format(header))
-            cleanData = map(lambda recordList: \
-                                map(int, recordList), \
-                            rawData[1:])
+            rawDataWithoutHeader = rawData[1:]
         else:
             print("header:None")
-            cleanData = map(lambda recordList: \
-                                map(int, recordList), \
-                            rawData)
+            rawDataWithoutHeader = rawData
+        cleanData = map(lambda recordList: \
+                            map(int, recordList),\
+                        rawDataWithoutHeader)
         idList = map(lambda r: r[0], cleanData)
         xList = map(lambda r: tuple(r[1:len(r)-1]), cleanData)
         yList = map(lambda r: r[-1], cleanData)
@@ -46,15 +45,15 @@ def readDataFrom(path, hasHeader=True):
 
 class kNN(object):
 
-    def __init__(self, sampleNum, featureNum, kNum=None, distancePValue=None):
-        if kNum == None:
-            kNum = 1
+    def __init__(self, sampleNum, featureNum, k=None, distancePValue=None):
+        if k == None:
+            k = 1
         if distancePValue == None:
             distancePValue = 2
 
         self.sampleNum = sampleNum
         self.featureNum = featureNum
-        self.kNum = kNum
+        self.k = k
         self.p = float(distancePValue)
         self.distMatrix = dict()
 
@@ -86,7 +85,6 @@ class kNN(object):
     def distanceBetween(self, aList, bList, p=None):
         if p == None:
              p = self.p
-        import math
         sigma = sum(\
              map(lambda aa, bb:\
                      math.pow(aa-bb, p),\
@@ -95,9 +93,52 @@ class kNN(object):
         distance = math.pow(sigma.__abs__(), 1.0/p)
         return distance
 
-    def train(self, xList, yList, p=None):
+    def chooseK(self, xList, yList, p=None):
         if p == None:
             p = self.p
+        kList = range(1, len(xList)+1)
+        print kList
+        misClassDict = dict()
+        # 遍历k
+        for kIdx in xrange(len(kList)):
+            k = kList[kIdx]
+            misClassDict[k] = 0
+            # 选择当前k下，每个样本的yHat
+            for xIdx in xrange(len(xList)):
+                x = xList[xIdx]
+                xAndDistAndYTupList = map(lambda (x2, dist):\
+                                              (x2, dist, yList[xList.index(x2)]),\
+                                          self.distMatrix[x].iteritems())
+                xAndDistAndYTupList.sort(key=lambda (x2, dist, y): dist,\
+                                         reverse=False)
+                xAndDistAndYTupList = filter(lambda (x2, dist, y): x2 != x, xAndDistAndYTupList)
+                # 统计当前样本的k近邻的类别
+                yHatDict = dict()
+                yHatList = map(lambda (x2, dist, y):\
+                                   y,\
+                               xAndDistAndYTupList[:k])
+                for idx in xrange(len(yHatList)):
+                    yHat = yHatList[idx]
+                    if yHatDict.has_key(yHat):
+                        yHatDict[yHat] += 1
+                    else:
+                        yHatDict[yHat] = 1
+                yHatAndCountList = map(lambda (yHat, count):\
+                                           (yHat, count),\
+                                       yHatDict.iteritems())
+                yHatAndCountList.sort(key=lambda (yHat, count): count,\
+                                      reverse=True)
+                xsYHat = yHatAndCountList[0][0]
+                if yList[xIdx] != xsYHat:
+                    misClassDict[k] += 1
+        # 选择错误最少的k
+        kAndMisNumList = map(lambda (k, misNum):\
+                                 (k, misNum),\
+                             misClassDict.iteritems())
+        kAndMisNumList.sort(key=lambda (k, misNum): misNum,\
+                            reverse=False)
+        bestK = kAndMisNumList[0][0]
+        return bestK
 
     def predict(self, x, xList, yList, p=None):
         if p == None:
@@ -113,7 +154,7 @@ class kNN(object):
         xAndXXAndDistAndYTupList.sort(key=lambda (x, xx, dist, y): dist,\
                                       reverse=False)
         yDict = {}
-        for idx in xrange(self.kNum):
+        for idx in xrange(self.k):
             # (x, xx, dist, y)
             y = xAndXXAndDistAndYTupList[idx][3]
             if yDict.has_key(y):
@@ -128,11 +169,14 @@ class kNN(object):
         yHat = yAndCountTupList[0][0]
         return yHat
 
+    def plotScatter(self, xList, yList):
+        pass
+
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
     # 参数初始化
-    kNum = 2
+    k = 2
     distancePValue = 2
 
     dataPath = "./input1"
@@ -146,7 +190,7 @@ if __name__ == "__main__":
     #
     knn = kNN(sampleNum=len(idList),\
               featureNum=len(xList[0]),\
-              kNum=kNum,\
+              k=k,\
               distancePValue=distancePValue)
 
     knn.constructDistMatrix(xList=xList)
@@ -154,3 +198,6 @@ if __name__ == "__main__":
     print knn.predict(x=(1,3),\
                       xList=xList,\
                       yList=yList)
+
+    knn.chooseK(xList=xList,\
+                yList=yList)
