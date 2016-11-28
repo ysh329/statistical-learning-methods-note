@@ -70,9 +70,11 @@ class kNN(object):
 
     def constructDistMatrix(self, xList, p=None):
         '''
-        构建距离矩阵，类似
-        :param xList:
-        :param p:
+        构建距离矩阵，类似临街矩阵，但不是，其索引是通过两个实例点
+        作为索引进行的，而不是下标序号。构建过程中借助计算两个点距
+        离的函数。
+        :param xList: 训练样本特征
+        :param p: $L_p$ 距离参数
         :return:
         '''
         if p == None:
