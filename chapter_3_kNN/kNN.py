@@ -45,8 +45,18 @@ def readDataFrom(path, hasHeader=True):
 
 
 class kNN(object):
-
+    '''
+    k最近邻模型的类。无监督模型。
+    '''
     def __init__(self, sampleNum, featureNum, k=None, distancePValue=None):
+        '''
+        初始化模型参数
+        :param sampleNum: 训练集样本个数
+        :param featureNum: 每个样本的特征个数
+        :param k: 分类基于最近的 k 个样本
+        :param distancePValue: $L_p$ 距离参数
+        '''
+        # 参数检查
         if k == None:
             k = 1
         if distancePValue == None:
@@ -59,6 +69,12 @@ class kNN(object):
         self.distMatrix = dict()
 
     def constructDistMatrix(self, xList, p=None):
+        '''
+        构建距离矩阵，类似
+        :param xList:
+        :param p:
+        :return:
+        '''
         if p == None:
             p = self.p
         # 初始化
@@ -82,6 +98,13 @@ class kNN(object):
                     self.distMatrix[x2][x1] = self.distMatrix[x1][x2]
 
     def distanceBetween(self, aList, bList, p=None):
+        '''
+        计算两个点，表示为 aList 与 bList，二者之间的 $L_p$ 距离。
+        :param aList: 第一个点的特征
+        :param bList: 第二个点的特征
+        :param p: $L_p$ 距离参数
+        :return: 返回两个点之间的距离
+        '''
         if p == None:
              p = self.p
         sigma = sum(\
@@ -93,6 +116,15 @@ class kNN(object):
         return distance
 
     def chooseK(self, xList, yList, p=None):
+        '''
+        基于训练数据，选择最合适的 k 值。会对 k 从 1 到所有样本数进行遍历，
+         统计不同 k 值时分类正确的点数，最终的 k 选择分类错误最少的。
+        :param xList: 训练样本特征
+        :param yList: 训练样本标签
+        :param p: $L_p$ 距离参数
+        :return: 返回分类错误最少的 k 值
+        '''
+        # 参数检查默认为2
         if p == None:
             p = self.p
         kList = range(1, len(xList)+1)
@@ -139,8 +171,20 @@ class kNN(object):
         return bestK
 
     def predict(self, x, xList, yList, p=None):
+        '''
+        预测新输入样本 x 的类别，其中 xList 与 yList 分别是训练样本的
+        特征和类别标签， p 为 $L_P$ 距离的参数（默认为None，会被设定为
+        2）。
+        :param x: 新输入样本的特征
+        :param xList: 训练样本特征
+        :param yList: 训练样本标签
+        :param p: $L_p$ 距离参数
+        :return: 返回 x 预测出的类别
+        '''
+        # 检查参数
         if p == None:
             p = self.p
+        # 整合距离矩阵生成所需要的数据格式
         xAndXXAndDistAndYTupList = map(lambda xx, y:\
                                            (x,\
                                             xx,\
@@ -151,6 +195,7 @@ class kNN(object):
                                        xList, yList)
         xAndXXAndDistAndYTupList.sort(key=lambda (x, xx, dist, y): dist,\
                                       reverse=False)
+        # 根据其他样本点距离 x 的远近程度统计类别数目
         yDict = {}
         for idx in xrange(self.k):
             # (x, xx, dist, y)
