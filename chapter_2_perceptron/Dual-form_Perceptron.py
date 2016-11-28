@@ -30,14 +30,13 @@ def readDataFrom(path, hasHeader=True):
         if hasHeader:
             header = rawData[0]
             print("header:{0}".format(header))
-            cleanData = map(lambda recordList: \
-                                map(int, recordList), \
-                            rawData[1:])
+            rawDataWithoutHeader = rawData[1:]
         else:
             print("header:None")
-            cleanData = map(lambda recordList: \
-                                map(int, recordList), \
-                            rawData)
+            rawDataWithoutHeader = rawData
+        cleanData = map(lambda recordList: \
+                            map(int, recordList),\
+                        rawDataWithoutHeader)
         idList = map(lambda r: r[0], cleanData)
         xList = map(lambda r: r[1:len(r)-1], cleanData)
         yList = map(lambda r: r[-1], cleanData)
