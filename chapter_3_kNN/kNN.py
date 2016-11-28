@@ -127,7 +127,7 @@ class kNN(object):
         # 参数检查默认为2
         if p == None:
             p = self.p
-        kList = range(1, len(xList)+1)
+        kList = range(1, len(xList))
         misClassDict = dict()
         # 遍历k
         for kIdx in xrange(len(kList)):
@@ -168,7 +168,7 @@ class kNN(object):
         kAndMisNumList.sort(key=lambda (k, misNum): misNum,\
                             reverse=False)
         bestK = kAndMisNumList[0][0]
-        return bestK
+        return bestK, misClassDict
 
     def predict(self, x, xList, yList, p=None):
         '''
@@ -257,6 +257,23 @@ class kNN(object):
         plt.savefig(saveFigPath)
         plt.show()
 
+    def plotKChart(self, misClassDict, saveFigPath):
+        kList = []
+        misRateList = []
+        for k, misClassNum in misClassDict.iteritems():
+            kList.append(k)
+            misRateList.append(1.0 - 1.0/k*misClassNum)
+
+        fig = plt.figure(saveFigPath)
+        plt.plot(kList, misRateList, 'r--')
+        plt.title(saveFigPath)
+        plt.xlabel('k Num.')
+        plt.ylabel('Misclassified Rate')
+        plt.legend(saveFigPath)
+        plt.grid(True)
+        plt.savefig(saveFigPath)
+        plt.show()
+
 ################################### PART3 TEST ########################################
 # 例子
 if __name__ == "__main__":
@@ -265,7 +282,8 @@ if __name__ == "__main__":
     distancePValue = 2
     dataPath = "./input1"
     hasHeader = True
-    saveFigPath = u"k-Nearest Neighbor Scatter Plot"
+    saveScatterFigPath = u"k-Nearest Neighbor Scatter Plot"
+    saveKChartFigPath = u"k-Nearest Neighbor's K Chart"
 
     # 读取数据
     idList, xList, yList = readDataFrom(path=dataPath,\
@@ -291,10 +309,13 @@ if __name__ == "__main__":
     print("newYHat:{0}".format(newYHat))
 
     # 基于数据选择一个最合适的 k 值
-    knn.chooseK(xList=xList,\
-                yList=yList)
+    bestK, misClassDict = knn.chooseK(xList=xList,\
+                                      yList=yList)
+    print("bestK:{0}".format(bestK))
+    knn.plotKChart(misClassDict=misClassDict,\
+                   saveFigPath=saveKChartFigPath)
 
     # 绘制散点图
     knn.plotScatter(xList=xList,\
                     yList=yList,\
-                    saveFigPath=saveFigPath)
+                    saveFigPath=saveScatterFigPath)
