@@ -1,5 +1,5 @@
 # statistical-learning-methods-note
-李航《统计学习方法》笔记，重点是实现里面的算法，测试样例是例题数据，学习笔记主要在[本人博客](http://121.42.47.99/yuenshome/wordpress)。
+李航《统计学习方法》笔记，重点是实现里面的算法，测试样例是例题数据，学习笔记主要在[本人博客](http://121.42.47.99/yuenshome/wordpress)的[《统计学习方法》](http://121.42.47.99/yuenshome/wordpress/?cat=202)目录下。
 
 * 第 1 章 统计学习方法概论
 * 第 2 章 感知机 [\[感知机代码-原始形式\]](./chapter_2_perceptron/Perceptron.py) [\[感知机代码-对偶形式\]](./chapter_2_perceptron/Dual-form_Perceptron.py)  
