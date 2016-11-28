@@ -12,6 +12,7 @@ __author__ = 'yuens'
 
 ################################### PART1 IMPORT ######################################
 import math
+import matplotlib.pylab as plt
 
 ################################### PART2 CLASS && FUNCTION ###########################
 
@@ -80,8 +81,6 @@ class kNN(object):
                                                                    p=p)
                     self.distMatrix[x2][x1] = self.distMatrix[x1][x2]
 
-        print self.distMatrix
-
     def distanceBetween(self, aList, bList, p=None):
         if p == None:
              p = self.p
@@ -97,7 +96,6 @@ class kNN(object):
         if p == None:
             p = self.p
         kList = range(1, len(xList)+1)
-        print kList
         misClassDict = dict()
         # 遍历k
         for kIdx in xrange(len(kList)):
@@ -169,8 +167,50 @@ class kNN(object):
         yHat = yAndCountTupList[0][0]
         return yHat
 
-    def plotScatter(self, xList, yList):
-        pass
+    def plotScatter(self, xList, yList, saveFigPath):
+        '''
+        根据特征数据 xList 及其类别 yList 绘制散点图，并将绘制出的
+        散点图保存在 saveFigPath 路径下。
+        :param xList: 样本特征
+        :param yList: 样本类别
+        :param saveFigPath: 保存散点图的路径
+        :return:
+        '''
+        # 判断特征是否大于等于二维
+        # 如果样本的特征大于等于 2
+        # 那么仅可视化前面 2 维度的数据
+        if len(xList[0]) >= 2:
+            x1List = map(lambda x: x[0], xList)
+            x2List = map(lambda x: x[1], xList)
+        else:
+            # 1 或 2 维数据都可视化为 2 维
+            x1List = x2List = map(lambda x: x[0], xList)
+        # 新建画布
+        scatterFig= plt.figure(saveFigPath)
+        # 预定义：颜色初始化
+        colorDict = {-1: 'm', 1: 'r', 2: 'b', 3: 'pink', 4: 'orange'}
+        # 绘制每个点
+        map(lambda idx: \
+                plt.scatter(x1List[idx], \
+                            x2List[idx], \
+                            marker='o', \
+                            color=colorDict[yList[idx]], \
+                            label=yList[idx]), \
+            xrange(len(x1List)))
+        # 给每种类别加上标注
+        # ySet = set(yList)
+        # map(lambda y: \
+        #         plt.legend(str(y), \
+        #                    loc='best'), \
+        #     ySet)
+
+        # 设定其他属性并保存图像后显示
+        plt.title(saveFigPath)
+        plt.xlabel(r'$x^1$')
+        plt.ylabel(r'$x^2$')
+        plt.grid(True)
+        plt.savefig(saveFigPath)
+        plt.show()
 
 ################################### PART3 TEST ########################################
 # 例子
@@ -178,26 +218,38 @@ if __name__ == "__main__":
     # 参数初始化
     k = 2
     distancePValue = 2
-
     dataPath = "./input1"
     hasHeader = True
+    saveFigPath = u"k-Nearest Neighbor Scatter Plot"
+
+    # 读取数据
     idList, xList, yList = readDataFrom(path=dataPath,\
                                         hasHeader=hasHeader)
     print("idList:{0}".format(idList))
     print("xList:{0}".format(xList))
     print("yList:{0}".format(yList))
 
-    #
+    # 实例化最近邻类
     knn = kNN(sampleNum=len(idList),\
               featureNum=len(xList[0]),\
               k=k,\
               distancePValue=distancePValue)
 
+    # 初始化距离矩阵并完成两点间距离计算
     knn.constructDistMatrix(xList=xList)
 
-    print knn.predict(x=(1,3),\
-                      xList=xList,\
-                      yList=yList)
+    # 预测一个新样本点的所属类别
+    newX = (1, 3)
+    newYHat = knn.predict(x=newX,\
+                          xList=xList,\
+                          yList=yList)
+    print("newYHat:{0}".format(newYHat))
 
+    # 基于数据选择一个最合适的 k 值
     knn.chooseK(xList=xList,\
                 yList=yList)
+
+    # 绘制散点图
+    knn.plotScatter(xList=xList,\
+                    yList=yList,\
+                    saveFigPath=saveFigPath)
