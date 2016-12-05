@@ -37,9 +37,10 @@ class Node(object):
                                                                   xList)\
                                                     )
 
-    def findNearest(self, root, x):
+    def findNearestInSameDim(self, root, x):
         '''
-        传入根结点，找到与 x 最近的实例并返回。
+        传入根结点，找到与 x 在【同一维度空间内】最近（并不是
+        真正的距离最近）的实例并返回。
         :param root: 传入的根结点
         :param x: 传入需要计算与之最近的实例点
         :return:
@@ -51,18 +52,18 @@ class Node(object):
         # 注意左子树接受的还有等于的情况
         if x <= root.value and root.left != None:
             root = root.left
-            return self.findNearest(root, x)
+            return self.findNearestInSameDim(root, x)
         # 注意左子树接受的还有等于的情况
         elif x <= root.value and root.left == None:
             return root.value
         elif root.value < x and root.right != None:
             root = root.right
-            return self.findNearest(root, x)
+            return self.findNearestInSameDim(root, x)
         elif root.value < x and root.right == None:
             return root.value
         else:
             print("Error")
-            return -1
+            return None
 
     def midTravel(self, root):
         '''
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
     # 实例
     root = Node(xList=xList)
-    print("root.findNearest(root, 3):{0}".format(root.findNearest(root, 3)))
+    print("root.findNearestInSameDim(root, 3):{0}".format(root.findNearestInSameDim(root, 3)))
 
     # 三种序列遍历
     # 因为全部只打印叶子结点所以结果是一样的
