@@ -51,7 +51,7 @@ class kdTree(object):
     '''
     class kdNode(object):
         '''
-        kd 树的结点
+        kd 树的二叉结点。
         '''
         def __init__(self, value=None, left=None, right=None, parent=None, featureIdx=None, layerIdx=None):
             self.value = value
@@ -134,6 +134,35 @@ class kdTree(object):
         '''
         pass
 
+    def findApproxNearestInSameDim(self, root, x, featureIdx=0):
+        '''
+        在由树根结点 root 产生的结点中找到输入样本 x 同一
+        维度空间的近似最近邻。
+        :param root: 二叉树结点，首次传入时为树的根节点
+        :param x: 输入样本 x
+        :param featureIdx: 当期待比较的特征下标（从 0 开始）
+        :return:
+        '''
+        if root.value == x:
+            return root.value, root
+        elif x[featureIdx] < root.value[featureIdx] and root.left != None:
+            featureIdx += 1
+            if featureIdx == len(x):
+                featureIdx = 0
+            return self.findApproxNearestInSameDim(root.left, x, featureIdx)
+        elif x[featureIdx] < root.value[featureIdx] and root.left == None:
+            return root.value, root
+        elif root.value[featureIdx] < x[featureIdx] and root.right != None:
+            featureIdx += 1
+            if featureIdx == len(x):
+                featureIdx = 0
+            return self.findApproxNearestInSameDim(root.right, x, featureIdx)
+        elif root.value[featureIdx] < x[featureIdx] and root.right == None:
+            return root.value, root
+        else:
+            print("find Nearest Unexpected Error")
+            return None
+
     def midTravel(self, root):
         '''
         二叉树的中序遍历。
@@ -146,7 +175,7 @@ class kdTree(object):
             # print e
             return None
         # 也可以是其他操作
-        print("=== root.value:{0} ===".format(root.value))
+        print("root.value:{0}".format(root.value))
         try:
             self.midTravel(root.right)
         except AttributeError as e:
@@ -182,20 +211,36 @@ if __name__ == "__main__":
     hasHeader = True
 
     # 读取数据
+    print("=== read data ===")
     idList, xList, yList = readDataFrom(path=dataPath,\
                                         hasHeader=hasHeader)
     print("idList:{0}".format(idList))
     print("xList:{0}".format(xList))
     print("yList:{0}".format(yList))
+    print
+
+    # 实际采用的数据：数据来自书上的例题
+    print("=== unlabeled data ===")
+    xList = [[2, 3], [5, 4], [9, 6], [4, 7], [8, 1], [7, 2]]
+    print("xList:{0}".format(xList))
+    print
 
     # 实例化kd-Tree
-    print median(xList=[1,2,3])
-    print median(xList=[1,2,3,4])
-    xx = [1,2]
-    print median(xx)
-
-    print("==========================")
-    xList = [[2, 3], [5, 4], [9, 6], [4, 7], [8, 1], [7, 2]]
+    print("=== create kd-Tree ===")
     tree = kdTree()
     kdTreeRoot = tree.createKDTree(xList=xList)
+    print("midTravel order: ")
     tree.midTravel(root=kdTreeRoot)
+    print
+
+    # 查找与 x 最近的实例
+    '''
+    x 可以是已经在训练集中的样本，
+    也可是新数据样本。
+    '''
+    print("=== Find Nearest Instance ===")
+    x = [9, 6]
+    print("x:{0}".format(x))
+    approxNearestX, approxNearestRoot = tree.findApproxNearestInSameDim(kdTreeRoot, x)
+    print("approxNearestX:{0}".format(approxNearestX))
+    print("approxNearestRoot:{0}".format(approxNearestRoot))
