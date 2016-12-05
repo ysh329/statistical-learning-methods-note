@@ -37,7 +37,7 @@ class Node(object):
                                                                   xList)\
                                                     )
 
-    def findNearestInSameDim(self, root, x):
+    def findApproxNearestInSameDim(self, root, x):
         '''
         传入根结点，找到与 x 在【同一维度空间内】最近（并不是
         真正的距离最近）的实例并返回。
@@ -52,13 +52,13 @@ class Node(object):
         # 注意左子树接受的还有等于的情况
         if x <= root.value and root.left != None:
             root = root.left
-            return self.findNearestInSameDim(root, x)
+            return self.findApproxNearestInSameDim(root, x)
         # 注意左子树接受的还有等于的情况
         elif x <= root.value and root.left == None:
             return root.value
         elif root.value < x and root.right != None:
             root = root.right
-            return self.findNearestInSameDim(root, x)
+            return self.findApproxNearestInSameDim(root, x)
         elif root.value < x and root.right == None:
             return root.value
         else:
@@ -142,7 +142,8 @@ if __name__ == "__main__":
 
     # 实例
     root = Node(xList=xList)
-    print("root.findNearestInSameDim(root, 3):{0}".format(root.findNearestInSameDim(root, 3)))
+    print("root.findApproxNearestInSameDim(root, 3):{0}"\
+          .format(root.findApproxNearestInSameDim(root, 3)))
 
     # 三种序列遍历
     # 因为全部只打印叶子结点所以结果是一样的
