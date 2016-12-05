@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ################################### PART0 DESCRIPTION #################################
-# Filename: WrongBinaryTreeCodeDemo.py
+# Filename: WrongKDTreeCodeDemo.py
 # Description: 虽然是错误的二叉树实现方法，但仍然值得参考。
 #
 
