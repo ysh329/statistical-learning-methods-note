@@ -11,7 +11,7 @@ __author__ = 'yuens'
 
 
 ################################### PART1 IMPORT ######################################
-
+import math
 
 ################################### PART2 CLASS && FUNCTION ###########################
 
@@ -51,7 +51,8 @@ class kdTree(object):
     '''
     class kdNode(object):
         '''
-        kd 树的二叉结点。
+        kd 树的二叉结点。由于搜索 kd 树时候需要回退，所以也要构建出结点的
+        父结点，即 parent 。
         '''
         def __init__(self, value=None, left=None, right=None, parent=None, featureIdx=None, layerIdx=None):
             self.value = value
@@ -62,8 +63,26 @@ class kdTree(object):
             self.right = right
             self.parent = parent
 
-    def __init__(self):
-        pass
+    def __init__(self, sampleNum, featureNum, k=None, lengthP=None):
+        '''
+        初始化模型参数
+        :param sampleNum: 训练集样本个数
+        :param featureNum: 每个样本的特征个数
+        :param k: 分类基于最近的 k 个样本
+        :param lengthP: $L_p$ 距离参数
+        '''
+        # 参数检查
+        # 如果为空则计算最近邻
+        if k == None:
+            k = 1
+        # 如果为空则计算欧氏距离
+        if lengthP == None:
+            lengthP = 2
+
+        self.sampleNum = sampleNum
+        self.featureNum = featureNum
+        self.k = k
+        self.p = float(lengthP)
 
     def createKDTree(self, xList, layerIdx=0, featureIdx=0):
         '''
@@ -125,14 +144,32 @@ class kdTree(object):
                             layerIdx=layerIdx,\
                             featureIdx=featureIdx)
 
-    def findNearest(self, root, x):
+    def findNearest(self, root, x, bestDist, approxNearestRoot=None, isFirstFind=True):
         '''
         传入根结点，找到与 x 最近的实例并返回。
         :param root: 传入的根结点
         :param x: 传入需要计算与之最近的实例点
         :return:
         '''
-        pass
+        if isFirstFind:
+            approxNearestX, approxNearestRoot = self.findApproxNearestInSameDim(root=root,\
+                                                                                x=x)
+            bestDist = self.distanceBetween(x, approxNearestRoot.value)
+            if approxNearestRoot.parent != None:
+                return self.findNearest(root=approxNearestRoot.parent,\
+                                        x=x,\
+                                        bestDist=bestDist,\
+                                        approxNearestRoot=approxNearestRoot,\
+                                        isFirstFind=False)
+            else:
+                return
+        else:
+            tmpDist = self.distanceBetween(x, root.value)
+            if tmpDist < bestDist:
+                approxNearestRoot = root
+
+
+
 
     def findApproxNearestInSameDim(self, root, x, featureIdx=0):
         '''
@@ -162,6 +199,24 @@ class kdTree(object):
         else:
             print("find Nearest Unexpected Error")
             return None
+
+    def distanceBetween(self, aList, bList, p=None):
+        '''
+        计算两个点，表示为 aList 与 bList，二者之间的 $L_p$ 距离。
+        :param aList: 第一个实例样本的特征
+        :param bList: 第二个实例样本的特征
+        :param p: $L_p$ 距离参数
+        :return: 返回两个点之间的距离
+        '''
+        if p == None:
+             p = self.p
+        sigma = sum(\
+             map(lambda aa, bb:\
+                     math.pow(aa-bb, p),\
+                 aList, bList)\
+             )
+        distance = math.pow(sigma.__abs__(), 1.0/p)
+        return distance
 
     def midTravel(self, root):
         '''
@@ -227,7 +282,7 @@ if __name__ == "__main__":
 
     # 实例化kd-Tree
     print("=== create kd-Tree ===")
-    tree = kdTree()
+    tree = kdTree(sampleNum=len(xList), featureNum=len(xList[0]), k=1, lengthP=2)
     kdTreeRoot = tree.createKDTree(xList=xList)
     print("midTravel order: ")
     tree.midTravel(root=kdTreeRoot)
