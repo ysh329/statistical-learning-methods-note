@@ -9,7 +9,7 @@
 
 * 第 1 章 统计学习方法概论
 * 第 2 章 [感知机](./chapter_2_perceptron/) [\[感知机代码-原始形式\]](./chapter_2_perceptron/Perceptron.py) [\[感知机代码-对偶形式\]](./chapter_2_perceptron/Dual-form_Perceptron.py)  
-* 第 3 章 [k最近邻算法](./chapter_3_kNN/) [\[k最近邻代码\]](./chapter_3_kNN/kNN.py) [\[kd树简化版代码\]](./chapter_3_kNN/Simple-kd-Tree.py) [\[kd树代码\]](./chapter_3_kNN/kd-Tree.py) [\[错误kd树代码\]](./chapter_3_kNN/WrongKDTreeCodeDemo.py)
+* 第 3 章 [k近邻算法](./chapter_3_kNN/) [\[k近邻代码\]](./chapter_3_kNN/kNN.py) [\[kd树简化版代码\]](./chapter_3_kNN/Simple-kd-Tree.py) [\[kd树完整版代码\]](./chapter_3_kNN/kd-Tree.py) [\[错误kd树代码\]](./chapter_3_kNN/WrongKDTreeCodeDemo.py)
 * 第 4 章 朴素贝叶斯法
 * 第 5 章 决策树
 * 第 6 章 逻辑斯谛回归与最大熵模型
