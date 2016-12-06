@@ -10,7 +10,7 @@
 
 ### Python
 
-- [k最近邻](./chapter_3_kNN/kNN.py)
+- [k近邻](./chapter_3_kNN/kNN.py)
 - [kd树简化版](./chapter_3_kNN/Simple-kd-Tree.py)
 - [kd树完整版](./chapter_3_kNN/kd-Tree.py)
 - [错误kd树](./chapter_3_kNN/WrongKDTreeCodeDemo.py)
