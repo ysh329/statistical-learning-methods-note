@@ -58,6 +58,7 @@ class kdTree(object):
             self.value = value
             self.featureIdx = featureIdx
             self.layerIdx = layerIdx
+            self.visited = False
 
             self.left = left
             self.right = right
@@ -152,9 +153,13 @@ class kdTree(object):
         :return:
         '''
         if isFirstFind:
+            # step1.找到第一个近似最近点
+            # step2.并以此节点为当前最近点
             approxNearestX, approxNearestRoot = self.findApproxNearestInSameDim(root=root,\
                                                                                 x=x)
             bestDist = self.distanceBetween(x, approxNearestRoot.value)
+            approxNearestRoot.visited = True
+            # step3.递归地向上回退
             if approxNearestRoot.parent != None:
                 return self.findNearest(root=approxNearestRoot.parent,\
                                         x=x,\
@@ -162,11 +167,78 @@ class kdTree(object):
                                         approxNearestRoot=approxNearestRoot,\
                                         isFirstFind=False)
             else:
-                return
+                # step4.回退到根节点搜索结束
+                # 最后的当前最近点即为 x 的最近邻点
+                return approxNearestRoot
         else:
+            if root.visited == True:
+                return self.findNearest(root=root.parent,\
+                                        x=x,\
+                                        bestDist=bestDist,\
+                                        approxNearestRoot=approxNearestRoot,\
+                                        isFirstFind=False)
+            # step3.1 如果该节点保存的实例点比当前最近点距离目标点更近
+            # 则以该实例点作为新的当前最近点
             tmpDist = self.distanceBetween(x, root.value)
             if tmpDist < bestDist:
                 approxNearestRoot = root
+                bestDist = tmpDist
+            root.visited = True
+            # step3.2 检查该节点的父结点(当前root)的另一子结点(root.left/root.right)
+            # 若不存在父结点则返回当前近似最近点作为最近邻点
+            if root.left != None and root.right != None:
+                # 把该节点的父结点(当前root)的另一子结点作为当前的 root
+                # 并继续往下找
+                if root.left.visited == True and root.right.visited == True:
+                    # 两个节点都被访问过则继续向上回退查找
+                    if root.parent != None:
+                        return self.findNearest(root=root.parent,\
+                                                x=x,\
+                                                bestDist=bestDist,\
+                                                approxNearestRoot=approxNearestRoot,\
+                                                isFirstFind=False)
+                    else:
+                        return approxNearestRoot
+                # 把该节点的父结点(当前root)的另一子结点作为当前的 root
+                elif root.left.visited == False and root.right.visited == True:
+                    root = root.left
+                elif root.left.visited == True and root.right.visited == False:
+                    root = root.right
+                else: # 异常：两个子结点都没访问过
+                    print("Exception: root has two unvisited children.")
+                    exit(-1)
+
+                pass
+                # 计算目标区域的超矩形边角点坐标(按理应该计算超球体，但是超球体不好算)
+                xDimRangeTupList = map(lambda xx: (xx-bestDist, xx+bestDist), x)
+                map(lambda rootParentVxx, rootVxx: rootParentVxx+(), root.parent.value, root.value)
+                pass
+
+
+            elif root.left != None or root.right != None:
+                return self.findNearest(root=root.parent,\
+                                        x=x,\
+                                        bestDist=bestDist,\
+                                        approxNearestRoot=approxNearestRoot,\
+                                        isFirstFind=False)
+            else:
+                print("Exception: root has no child.")
+                exit(-1)
+
+
+    def computeChildDimRange(self, root):
+        # 存在左右子节点
+        if root.left != None and root.right != None:
+            pass
+        # 左右子结点存在其中一个
+        elif root.left == None or root.right == None:
+            pass
+        # 不存在左右子结点
+        else:
+            # root.left == None and root.right == None
+            pass
+
+
 
 
 
